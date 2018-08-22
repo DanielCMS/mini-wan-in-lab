@@ -1,0 +1,5 @@
+<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#F7F7F7" height="50" width="50"/>
+    <line stroke-width="0.5" y2="25" x2="29" y1="25" x1="21" stroke="#CCD2DA" fill="none"/>
+    <line transform="rotate(90 25,25)" stroke-width="0.5" y2="25" x2="29" y1="25" x1="21" stroke="#CCD2DA" fill="none"/>
+</svg>

@@ -1,0 +1,11 @@
+<div
+  class="canvas-holder"
+  [class.dragging]="isCanvasDragging"
+  [style.background-position-x.px]="bgLeft"
+  [style.background-position-y.px]="bgTop"
+  (mousedown)="mouseDown($event)"
+  (mousemove)="mouseMove($event)"
+  (mouseup)="mouseUp()"
+>
+  {{top}}
+</div>
