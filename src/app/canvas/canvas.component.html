@@ -1,11 +1,12 @@
 <div
   class="canvas-holder"
   [class.dragging]="isCanvasDragging"
-  [style.background-position-x.px]="bgLeft"
-  [style.background-position-y.px]="bgTop"
+  [style.background-position-x.px]="offset.x"
+  [style.background-position-y.px]="offset.y"
   (mousedown)="mouseDown($event)"
   (mousemove)="mouseMove($event)"
   (mouseup)="mouseUp()"
 >
-  {{top}}
+  <app-controls></app-controls>
+  <app-router-panel></app-router-panel>
 </div>

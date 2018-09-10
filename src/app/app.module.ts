@@ -4,12 +4,24 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { LogoComponent } from './logo/logo.component';
 import { CanvasComponent } from './canvas/canvas.component';
+import { RouterPanelComponent } from './router-panel/router-panel.component';
+import { HostPanelComponent } from './host-panel/host-panel.component';
+import { LinkPanelComponent } from './link-panel/link-panel.component';
+import { FlowPanelComponent } from './flow-panel/flow-panel.component';
+import { DraggableDirective } from './draggable.directive';
+import { ControlsComponent } from './controls/controls.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LogoComponent,
-    CanvasComponent
+    CanvasComponent,
+    RouterPanelComponent,
+    HostPanelComponent,
+    LinkPanelComponent,
+    FlowPanelComponent,
+    DraggableDirective,
+    ControlsComponent
   ],
   imports: [
     BrowserModule

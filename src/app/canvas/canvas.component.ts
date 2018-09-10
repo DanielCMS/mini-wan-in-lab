@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Vector } from '../vector';
 
 @Component({
   selector: 'app-canvas',
@@ -6,37 +7,34 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./canvas.component.scss']
 })
 export class CanvasComponent implements OnInit {
-  bgLeft: number;
-  bgTop: number;
-  _pageX: number;
-  _pageY: number;
-  _lastLeft: number;
-  _lastTop: number;
-  isCanvasDragging: boolean;
+  private offset: Vector = { x: 0, y: 0 };
+  private anchor: Vector;
+  private last: Vector;
+  isCanvasDragging: boolean = false;
 
-  constructor() {
-    this.bgTop = 0;
-    this.bgLeft = 0;
-  }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
-  mouseDown(e) {
-    this._pageX = e.pageX;
-    this._pageY = e.pageY;
-    this._lastLeft = this.bgLeft;
-    this._lastTop = this.bgTop;
+  mouseDown(e: MouseEvent): void {
+    if (!(<HTMLElement>e.target).classList.contains("canvas-holder")) {
+      return;
+    }
+
+    this.anchor = { x: e.pageX, y: e.pageY };
+    this.last = this.offset;
     this.isCanvasDragging = true;
   }
 
-  mouseMove(e) {
+  mouseMove(e: MouseEvent): void {
     if (!this.isCanvasDragging) {
       return;
     }
 
-    this.bgLeft = this._lastLeft + e.pageX - this._pageX;
-    this.bgTop = this._lastTop + e.pageY - this._pageY;
+    this.offset = {
+      x: this.last.x + e.pageX - this.anchor.x,
+      y: this.last.y + e.pageY - this.anchor.y
+    };
   }
 
   mouseUp() {

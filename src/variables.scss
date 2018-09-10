@@ -1,34 +1,8 @@
-@import "variables.scss";
-
-@font-face {
-    font-family: "NeuzeitGro-Bla";
-    src: url("/fonts/NeuzeitGroBla.ttf")
-}
-
-@font-face {
-    font-family: "Lato-Regular";
-    src: url("/fonts/Lato-Regular.ttf")
-}
-
-@font-face {
-    font-family: "Lato-Bold";
-    src: url("/fonts/Lato-Bold.ttf")
-}
-
-@font-face {
-    font-family: "Lato-Italic";
-    src: url("/fonts/Lato-Italic.ttf")
-}
-
-@font-face {
-    font-family: "NeuzeitGro-Bold";
-    src: url("/fonts/NeuzeitGro-Bold.ttf")
-}
-
-@font-face {
-    font-family: "NeuzeitGro";
-    src: url("/fonts/NeuzeitGro.ttf")
-}
+$grey: #E2E2E2;
+$black: #000000;
+$transparent-black: rgba(0, 0, 0, 0.8);
+$white: #FFFFFF;
+$dark-blue: #7893FF;
 
 html,body { 
   width: 100%; 
@@ -98,4 +72,13 @@ html,body {
   flex-flow: row wrap;
   -webkit-flex-flow: row wrap;
   -ms-flex-wrap: wrap;
+}
+
+.top-bar-default {
+  border-bottom: 1px solid $grey;
+  background: $transparent-black;
+  width: 100%;
+  height: 64px;
+  position: relative;
+  z-index: 10000;
 }
