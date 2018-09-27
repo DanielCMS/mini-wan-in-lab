@@ -9,4 +9,12 @@
   &.dragging {
     cursor: grabbing;
   }
+
+  &.adding-router {
+    cursor: url(/assets/images/router.png), auto;
+  }
+
+  &.adding-host {
+    cursor: url(/assets/images/host.png), auto;
+  }
 }

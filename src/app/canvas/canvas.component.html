@@ -1,6 +1,8 @@
 <div
   class="canvas-holder"
   [class.dragging]="isCanvasDragging"
+  [class.adding-router]="canvasStatus === CanvasStatus.AddingRouter"
+  [class.adding-host]="canvasStatus === CanvasStatus.AddingHost"
   [style.background-position-x.px]="offset.x"
   [style.background-position-y.px]="offset.y"
   (mousedown)="mouseDown($event)"

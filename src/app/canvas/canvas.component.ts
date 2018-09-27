@@ -12,25 +12,26 @@ export class CanvasComponent implements OnInit {
   private anchor: Vector;
   private last: Vector;
   private canvasStatus: CanvasStatus = CanvasStatus.Idle;
-  isCanvasDragging: boolean = false;
+  private CanvasStatus = CanvasStatus;
+  private isCanvasDragging: boolean = false;
 
   constructor() {}
 
   ngOnInit() {}
 
-  requestAddingRouter() {
+  private requestAddingRouter(): void {
     this.canvasStatus = CanvasStatus.AddingRouter;
   }
 
-  requestAddingHost() {
+  private requestAddingHost(): void {
     this.canvasStatus = CanvasStatus.AddingHost;
   }
 
-  requestDeleting() {
+  private requestDeleting(): void {
     this.canvasStatus = CanvasStatus.Idle;
   }
 
-  mouseDown(e: MouseEvent): void {
+  private mouseDown(e: MouseEvent): void {
     if (!(<HTMLElement>e.target).classList.contains("canvas-holder")) {
       return;
     }
@@ -40,7 +41,7 @@ export class CanvasComponent implements OnInit {
     this.isCanvasDragging = true;
   }
 
-  mouseMove(e: MouseEvent): void {
+  private mouseMove(e: MouseEvent): void {
     if (!this.isCanvasDragging) {
       return;
     }
@@ -51,7 +52,7 @@ export class CanvasComponent implements OnInit {
     };
   }
 
-  mouseUp() {
+  private mouseUp() {
     this.isCanvasDragging = false;
   }
 }
