@@ -1,3 +1,29 @@
-<p>
-  controls works!
-</p>
+<div
+  class="topology-node-control-button add-router"
+  [class.active]="canvasStatus === CanvasStatus.AddingRouter"
+  (click)="addRouter()"
+>
+  <img width="30px" height="30px" src="/assets/images/router.svg">
+  <div>
+      Add Router
+  </div>
+</div>
+<div
+  class="topology-node-control-button add-host"
+  [class.active]="canvasStatus === CanvasStatus.AddingHost"
+  (click)="addHost()"
+>
+  <img width="30px" height="30px" src="/assets/images/host.svg">
+  <div>
+      Add Host
+  </div>
+</div>
+<div
+  class="topology-node-control-button delete"
+  (click)="delete()"
+>
+  <img width="30px" height="30px" src="/assets/images/delete.svg">
+  <div>
+      Delete
+  </div>
+</div>
