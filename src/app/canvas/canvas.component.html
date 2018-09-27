@@ -7,6 +7,12 @@
   (mousemove)="mouseMove($event)"
   (mouseup)="mouseUp()"
 >
-  <app-controls></app-controls>
+  <app-controls
+    [canvasStatus]="canvasStatus"
+    (addRouterClicked)="requestAddingRouter()"
+    (addHostClicked)="requestAddingHost()"
+    (deleteClicked)="requestDeleting()"
+  >
+  </app-controls>
   <app-router-panel></app-router-panel>
 </div>

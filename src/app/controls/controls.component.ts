@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, EventEmitter, OnInit, Input, Output } from '@angular/core';
 import { CanvasStatus } from '../canvas-status.ts';
 
 @Component({
@@ -8,6 +8,9 @@ import { CanvasStatus } from '../canvas-status.ts';
 })
 export class ControlsComponent implements OnInit {
   @Input() canvasStatus: CanvasStatus;
+  @Output() addRouterClicked = new EventEmitter<void>();
+  @Output() addHostClicked = new EventEmitter<void>();
+  @Output() deleteClicked = new EventEmitter<void>();
 
   CanvasStatus = CanvasStatus;
 
@@ -16,15 +19,15 @@ export class ControlsComponent implements OnInit {
   ngOnInit() {
   }
 
-  addRouter(): void {
-    console.log("Adding router");
+  private addRouter(): void {
+    this.addRouterClicked.emit();
   }
 
-  addHost(): void {
-    console.log("Adding host");
+  private addHost(): void {
+    this.addHostClicked.emit();
   }
 
-  delete(): void {
-    console.log("Deleting");
+  private delete(): void {
+    this.deleteClicked.emit();
   }
 }
