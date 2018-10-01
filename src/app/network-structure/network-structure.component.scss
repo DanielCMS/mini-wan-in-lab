@@ -1,0 +1,38 @@
+@import "../../variables.scss";
+
+.router {
+	cursor: grab;
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.selected {
+    border-radius: 10px;
+    border: $orange solid 2px;
+    margin-top: -7px;
+    margin-left: -7px;
+    padding: 5px;
+  }
+   
+}
+
+.host {
+  cursor: grab;
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
+  &:active {
+    cursor: grabbing;
+  }
+}

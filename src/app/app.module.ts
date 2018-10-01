@@ -10,6 +10,7 @@ import { LinkPanelComponent } from './link-panel/link-panel.component';
 import { FlowPanelComponent } from './flow-panel/flow-panel.component';
 import { DraggableDirective } from './draggable.directive';
 import { ControlsComponent } from './controls/controls.component';
+import { NetworkStructureComponent } from './network-structure/network-structure.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { ControlsComponent } from './controls/controls.component';
     LinkPanelComponent,
     FlowPanelComponent,
     DraggableDirective,
-    ControlsComponent
+    ControlsComponent,
+    NetworkStructureComponent
   ],
   imports: [
     BrowserModule
