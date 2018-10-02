@@ -57,6 +57,7 @@
   .bob {
     @include transition(all ease .2s);
     fill: $grey;
+    pointer-events: none;
   }
 
   &.editable {

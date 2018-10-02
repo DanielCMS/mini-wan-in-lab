@@ -34,7 +34,8 @@ export class CanvasComponent implements OnInit {
     private panelRegistry: PanelRegistry) {}
 
   ngOnInit() {
-    this.setupEvents();
+    this.setupKeyboardEvents();
+    this.setupMouseEvents();
   }
 
   private requestAddingRouter(): void {
@@ -53,7 +54,15 @@ export class CanvasComponent implements OnInit {
     this.canvasStatus = CanvasStatus.Idle;
   }
 
-  private setupEvents(): void {
+  prviate setupKeyboardEvents(): void {
+    fromEvent(document, 'keydown').subscribe((e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        this.canvasStatus = CanvasStatus.Idle;
+      }
+    });
+  }
+
+  private setupMouseEvents(): void {
     let mousedown$ = fromEvent(document, 'mousedown').pipe(
       filter((e: MouseEvent) => e.button === 0),
       tap((e: MouseEvent) => {
