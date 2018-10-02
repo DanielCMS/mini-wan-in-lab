@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Input, Output } from '@angular/core';
-import { CanvasStatus } from '../canvas-status.ts';
+import { CanvasStatus } from '../canvas-status';
 
 @Component({
   selector: 'app-controls',
@@ -10,6 +10,7 @@ export class ControlsComponent implements OnInit {
   @Input() canvasStatus: CanvasStatus;
   @Output() addRouterClicked = new EventEmitter<void>();
   @Output() addHostClicked = new EventEmitter<void>();
+  @Output() addLinkClicked = new EventEmitter<void>();  
   @Output() deleteClicked = new EventEmitter<void>();
 
   CanvasStatus = CanvasStatus;
@@ -26,6 +27,10 @@ export class ControlsComponent implements OnInit {
   private addHost(): void {
     this.addHostClicked.emit();
   }
+
+  private addLink(): void {
+    this.addLinkClicked.emit();
+  }  
 
   private delete(): void {
     this.deleteClicked.emit();

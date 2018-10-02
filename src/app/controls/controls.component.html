@@ -27,3 +27,14 @@
       Delete
   </div>
 </div>
+
+<div
+  class="topology-node-control-button add-link"
+  [class.active]="canvasStatus === CanvasStatus.AddingLink"
+  (click)="addLink()"
+>
+  <img width="30px" height="30px" src="/assets/images/cable.svg">
+  <div>
+    Add Link
+  </div>
+</div>
