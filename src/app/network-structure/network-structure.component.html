@@ -21,6 +21,8 @@
         width="80px"
         rx="5px"
         ry="5px"
+        class="topology-elements"
+        [id]="router.id"
       >
       </rect>
       <image
@@ -42,13 +44,15 @@
     <g
       *ngFor="let host of deviceRegistry.hostList"
       [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
-      class="host"
+      class="host topology-elements"
     >
       <rect
         height="60px"
         width="60px"
         rx="5px"
         ry="5px"
+        class="topology-elements"
+        [id]="host.id"
       >
       </rect>
       <image

@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { fromEvent } from 'rxjs';
+import { filter, switchMap, takeUntil, map } from "rxjs/operators";
 import { DeviceRegistry } from '../device-registry.service';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
@@ -16,7 +18,9 @@ export class CanvasComponent implements OnInit {
   private last: Vector;
   private canvasStatus: CanvasStatus = CanvasStatus.Idle;
   private CanvasStatus = CanvasStatus;
+
   private isCanvasDragging: boolean = false;
+  private isDeviceDragging: boolean = false;
 
   private devicePlacement: Vector;
   private isPlacingRouter: boolean = false;
@@ -25,7 +29,9 @@ export class CanvasComponent implements OnInit {
   constructor(private deviceRegistry: DeviceRegistry,
     private panelRegistry: PanelRegistry) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.setupEvents();
+  }
 
   private requestAddingRouter(): void {
     this.canvasStatus = CanvasStatus.AddingRouter;
@@ -43,29 +49,80 @@ export class CanvasComponent implements OnInit {
     this.canvasStatus = CanvasStatus.Idle;
   }
 
-  private mouseDown(e: MouseEvent): void {
-    if (!(<HTMLElement>e.target).classList.contains("canvas-holder") && !(<HTMLElement>e.target).classList.contains("svg-bg")) {
-      return;
-    }
+  private setupEvents(): void {
+    let mousedown$ = fromEvent(document, 'mousedown');
+    let mousemove$ = fromEvent(document, 'mousemove');
+    let mouseup$ = fromEvent(document, 'mouseup').pipe(
+      map((e: MouseEvent) => {
+        this.mouseUp();
 
-    this.anchor = { x: e.pageX, y: e.pageY };
-    this.last = this.offset;
-    this.isCanvasDragging = true;
+        return e;
+      }),
+    );
+
+    let mousedrag$ = mousedown$.pipe(
+      filter((e: MouseEvent) => e.button === 0),
+      switchMap((e: MouseEvent) => {
+        this.mouseDown(e);
+
+        return mousemove$.pipe(
+          takeUntil(mouseup$)
+        );
+      })
+    ).subscribe((e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      requestAnimationFrame(() => {
+        this.mouseMove(e);
+      });
+    }
+  }
+
+  private mouseDown(e: MouseEvent): void {
+    let target = <HTMLElement>e.target;
+    let classList = target.classList;
+
+    if (classList.contains("svg-bg")) {
+      this.anchor = { x: e.pageX, y: e.pageY };
+      this.last = this.offset;
+      this.isCanvasDragging = true;
+    } else if (classList.contains("topology-elements")) {
+      let id = target.id;
+
+      if (this.canvasStatus === CanvasStatus.AddingLink) {
+      } else {
+        this.last = { x: e.pageX, y: e.pageY };
+        this.idOfDraggingDevice = id;
+        this.isDeviceDragging = true;
+      }
+    }
   }
 
   private mouseMove(e: MouseEvent): void {
-    if (!this.isCanvasDragging) {
-      return;
-    }
+    if (this.isCanvasDragging) {
+      this.offset = {
+        x: this.last.x + e.pageX - this.anchor.x,
+        y: this.last.y + e.pageY - this.anchor.y
+      };
+    } else if (this.isDeviceDragging) {
+      let delta = {
+        x: e.pageX - this.last.x,
+        y: e.pageY - this.last.y
+      };
+      let id = this.idOfDraggingDevice;
 
-    this.offset = {
-      x: this.last.x + e.pageX - this.anchor.x,
-      y: this.last.y + e.pageY - this.anchor.y
-    };
+      this.deviceRegistry.getDeviceById(id).panBy(delta);
+      this.last = {
+        x: e.pageX,
+        y: e.pageY
+      };
+    }
   }
 
-  private mouseUp() {
+  private mouseUp(): void {
     this.isCanvasDragging = false;
+    this.idDeviceDragging = false;
   }
 
   // Transform screen pixel coordinates to un-offset version

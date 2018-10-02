@@ -1,23 +1,28 @@
 import { Vector } from '../vector';
 
-export class Host {
+export class Device {
   public interfaces: Interface[] = [];
 
   constructor(public id: string, public label: string, public position: Vector) {
+  }
+
+  panBy(delta: Vector) {
+    this.position = {
+      x: this.position.x + delta.x,
+      y: this.position.y + delta.y
+    };
   }
 }
 
-export class Router {
-  public interfaces: Interface[] = [];
+export class Host extends Device {
+}
 
-  constructor(public id: string, public label: string, public position: Vector) {
-  }
+export class Router extends Device {
 }
 
 export class Link {
-  id: number;
-  firstNodePos: Vector;
-  secondNodePos: Vector;
+  constructor(public id: string, public src: Device, public dst: Device) {
+  }
 }
 
 export class Interface {
