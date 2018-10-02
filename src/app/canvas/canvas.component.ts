@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { fromEvent } from 'rxjs';
-import { filter, switchMap, takeUntil, map } from "rxjs/operators";
+import { filter, switchMap, takeUntil, map, tap } from "rxjs/operators";
 import { DeviceRegistry } from '../device-registry.service';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { CanvasStatus } from "../canvas-status";
+
+const CLICK_DELTA = 1;
 
 @Component({
   selector: 'app-canvas',
@@ -12,6 +14,8 @@ import { CanvasStatus } from "../canvas-status";
   styleUrls: ['./canvas.component.scss']
 })
 export class CanvasComponent implements OnInit {
+
+  private mouseDownLocation: Vector;
 
   private offset: Vector = { x: 0, y: 0 };
   private anchor: Vector;
@@ -50,25 +54,32 @@ export class CanvasComponent implements OnInit {
   }
 
   private setupEvents(): void {
-    let mousedown$ = fromEvent(document, 'mousedown');
+    let mousedown$ = fromEvent(document, 'mousedown').pipe(
+      filter((e: MouseEvent) => e.button === 0),
+      tap((e: MouseEvent) => {
+        this.mouseDownLocation = {
+          x: e.pageX,
+          y: e.pageY
+        };
+        this.mouseDown(e);
+      })
+    );
     let mousemove$ = fromEvent(document, 'mousemove');
     let mouseup$ = fromEvent(document, 'mouseup').pipe(
-      map((e: MouseEvent) => {
-        this.mouseUp();
+      tap((e: MouseEvent) => {
+        if (Math.abs(e.pageX - this.mouseDownLocation.x) < CLICK_DELTA
+          && Math.abs(e.pageY - this.mouseDownLocation.y) < CLICK_DELTA) {
+          this.mouseClick(e);
+        }
 
-        return e;
+        this.mouseUp();
       }),
     );
 
     let mousedrag$ = mousedown$.pipe(
-      filter((e: MouseEvent) => e.button === 0),
-      switchMap((e: MouseEvent) => {
-        this.mouseDown(e);
-
-        return mousemove$.pipe(
-          takeUntil(mouseup$)
-        );
-      })
+      switchMap(() => mousemove$.pipe(
+        takeUntil(mouseup$)
+      ))
     ).subscribe((e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
@@ -85,7 +96,10 @@ export class CanvasComponent implements OnInit {
 
     if (classList.contains("svg-bg")) {
       this.anchor = { x: e.pageX, y: e.pageY };
-      this.last = this.offset;
+      this.last = {
+        x: this.offset.x,
+        y: this.offset.y
+      };
       this.isCanvasDragging = true;
     } else if (classList.contains("topology-elements")) {
       let id = target.id;
@@ -122,7 +136,22 @@ export class CanvasComponent implements OnInit {
 
   private mouseUp(): void {
     this.isCanvasDragging = false;
-    this.idDeviceDragging = false;
+    this.isDeviceDragging = false;
+  }
+
+  private mouseClick(e: MouseEvent): void {
+    let pageLocation = { x: e.pageX, y: e.pageY };
+    let normalized = this.normalizePoint(pageLocation);
+
+    if (this.canvasStatus == CanvasStatus.AddingRouter) {
+      this.deviceRegistry.addRouter(normalized);
+      this.canvasStatus = CanvasStatus.Idle;
+    }
+
+    if (this.canvasStatus == CanvasStatus.AddingHost) {
+      this.deviceRegistry.addHost(normalized);
+      this.canvasStatus = CanvasStatus.Idle;
+    }
   }
 
   // Transform screen pixel coordinates to un-offset version
