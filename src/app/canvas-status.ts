@@ -7,3 +7,8 @@ export enum CanvasStatus {
   HostSelected,
   LinkSelected
 }
+
+export enum AddLinkStatus {
+  Idle,
+  FisrtNodeSelected
+}

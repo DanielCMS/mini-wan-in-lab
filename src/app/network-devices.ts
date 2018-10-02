@@ -30,15 +30,3 @@ export class Interface {
   srcId: string;
   dstId: string;
 }
-
-export enum AddLinkStatus {
-  Idle,
-  Ready,
-  FisrtNodeSelected,
-  SecondNodeSelected
-}
-
-export enum DeviceType {
-  Router,
-  Host
-}

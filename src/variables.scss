@@ -3,8 +3,10 @@ $dark-grey: #CCD2DA;
 $black: #000000;
 $transparent-black: rgba(0, 0, 0, 0.8);
 $white: #FFFFFF;
+$blue: #59BEFF;
 $dark-blue: #7893FF;
 $light-blue: #F1F4F8;
+$lighter-blue: #DDF1FF;
 $orange: #FFAC51;
 
 @mixin user-select($select...) {
@@ -22,6 +24,13 @@ $orange: #FFAC51;
   -webkit-user-drag: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+}
+
+@mixin transition($transition...) {
+  -moz-transition: $transition;
+  -o-transition: $transition;
+  -webkit-transition: $transition;
+  transition: $transition;
 }
 
 html,body { 

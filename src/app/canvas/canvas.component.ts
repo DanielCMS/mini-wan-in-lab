@@ -143,14 +143,17 @@ export class CanvasComponent implements OnInit {
     let pageLocation = { x: e.pageX, y: e.pageY };
     let normalized = this.normalizePoint(pageLocation);
 
-    if (this.canvasStatus == CanvasStatus.AddingRouter) {
+    if (this.canvasStatus === CanvasStatus.AddingRouter) {
       this.deviceRegistry.addRouter(normalized);
       this.canvasStatus = CanvasStatus.Idle;
     }
 
-    if (this.canvasStatus == CanvasStatus.AddingHost) {
+    if (this.canvasStatus === CanvasStatus.AddingHost) {
       this.deviceRegistry.addHost(normalized);
       this.canvasStatus = CanvasStatus.Idle;
+    }
+
+    if (this.canvasStatus === CanvasStatus.AddingLink) {
     }
   }
 

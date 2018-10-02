@@ -17,6 +17,17 @@
   &:active {
     cursor: grabbing;
   }
+
+  rect {
+    fill: white;
+    fill-opacity: 0.6;
+    stroke: $grey;
+    stroke-width: 2px;
+
+    &:hover {
+      stroke: $orange;
+    }
+  }
 }
 
 .router {
@@ -30,27 +41,45 @@
     padding: 5px;
   }
 
-  rect {
-    fill: white;
-    stroke: $grey;
-    stroke-width: 2px;
-
-    &:hover {
-      stroke: $orange;
-    }
-  }
 }
 
 .host {
   @extend %network-elements;
+}
 
-  rect {
-    fill: white;
+.connect-point {
+  .frame {
+    @include transition(all ease .2s);
+    fill: $white;
     stroke: $grey;
-    stroke-width: 2px;
+  }
+
+  .bob {
+    @include transition(all ease .2s);
+    fill: $grey;
+  }
+
+  &.editable {
+    &.is-active, &:hover {
+      .frame {
+        fill: $lighter-blue;
+        stroke: $blue;
+      }
+
+      .bob {
+        fill: $blue;
+        stroke: $blue;
+      }
+    }
 
     &:hover {
-      stroke: $orange;
+      .frame {
+        transform: scale(1.5);
+      }
+
+      .bob {
+        transform: scale(1.5);
+      }
     }
   }
 }

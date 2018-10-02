@@ -16,29 +16,35 @@
       [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
       class="router"
     >
-      <rect
-        height="60px"
-        width="80px"
-        rx="5px"
-        ry="5px"
-        class="topology-elements"
-        [id]="router.id"
+      <g transform="translate(0, -30)">
+        <rect
+          height="60px"
+          width="80px"
+          rx="5px"
+          ry="5px"
+          class="topology-elements"
+          [id]="router.id"
+        >
+        </rect>
+        <image
+          x="22px"
+          y="5px"
+          width="36px"
+          height="36px"
+          xlink:href="/assets/images/router.svg"
+        />
+        <text x="40px" y="55px" text-anchor="middle">
+          {{router.label}}
+        </text>
+      </g>
+      <g
+        class="connect-point"
+        [class.editable]="canvasStatus === CanvasStatus.AddingLink"
+        [class.is-active]="selectedId === router.id"
       >
-      </rect>
-      <image
-        x="22px"
-        y="5px"
-        width="36px"
-        height="36px"
-        xlink:href="/assets/images/router.svg"
-      />
-      <text
-        x="40px"
-        y="55px"
-        text-anchor="middle"
-      >
-        {{router.label}}
-      </text>
+        <circle cx="0" cy="0" r="5" class="frame"></circle>
+        <circle cx="0" cy="0" r="2" class="bob"></circle>
+      </g>
     </g>
 
     <g
@@ -46,29 +52,39 @@
       [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
       class="host topology-elements"
     >
-      <rect
-        height="60px"
-        width="60px"
-        rx="5px"
-        ry="5px"
-        class="topology-elements"
-        [id]="host.id"
+      <g transform="translate(0, -30)">
+        <rect
+          height="60px"
+          width="60px"
+          rx="5px"
+          ry="5px"
+          class="topology-elements"
+          [id]="host.id"
+        >
+        </rect>
+        <image
+          x="12px"
+          y="5px"
+          width="36px"
+          height="36px"
+          xlink:href="/assets/images/host.svg"
+        />
+        <text
+          x="30px"
+          y="55px"
+          text-anchor="middle"
+        >
+          {{host.label}}
+        </text>
+      </g>
+      <g
+        class="connect-point"
+        [class.editable]="canvasStatus === CanvasStatus.AddingLink"
+        [class.is-active]="selectedId === host.id"
       >
-      </rect>
-      <image
-        x="12px"
-        y="5px"
-        width="36px"
-        height="36px"
-        xlink:href="/assets/images/host.svg"
-      />
-      <text
-        x="30px"
-        y="55px"
-        text-anchor="middle"
-      >
-        {{host.label}}
-      </text>
+        <circle cx="0" cy="0" r="5" class="frame"></circle>
+        <circle cx="0" cy="0" r="2" class="bob"></circle>
+      </g>
     </g>
   </g>
 </svg>
