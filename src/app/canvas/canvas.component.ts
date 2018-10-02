@@ -79,10 +79,10 @@ export class CanvasComponent implements OnInit {
   }
   
   private finishAddingDevice(): void {
-    setTimeout(() => {
-            this.isPlacingHost = false;
-            this.isPlacingRouter = false;
-            this.canvasStatus = CanvasStatus.Idle;
+    requestAnimationFrame(() => {
+      this.isPlacingHost = false;
+      this.isPlacingRouter = false;
+      this.canvasStatus = CanvasStatus.Idle;
     });
   }
 
