@@ -19,14 +19,8 @@
   >
   </app-controls>
   <app-network-structure 
-    [isPlacingRouter] = "isPlacingRouter"
-    [isPlacingHost] = "isPlacingHost"
-    [deviceLocation] = "devicePlacement"
+    [canvasOffset]="offset"
     [canvasStatus]="canvasStatus"
-    (finishAdding) = "finishAddingDevice()"
   >    
   </app-network-structure>
-
-  <app-router-panel></app-router-panel>
-
 </div>

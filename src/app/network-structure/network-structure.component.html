@@ -1,36 +1,34 @@
-<svg width="100%" height="100%" class = "svg-bg">
-  <line
-    *ngFor="let link of linkList"
-    [attr.x1.px]="link.firstNodePos.x"
-    [attr.y1.px]="link.firstNodePos.y"
-    [attr.x2.px]="link.secondNodePos.x"
-    [attr.y2.px]="link.secondNodePos.y"
-    style="stroke:rgb(154,209,253);stroke-width:2"
-  />
-</svg>
-
-<div *ngFor="let router of routerList">
-  <div
-    [ngStyle]="{'position': 'absolute', 'left': router.x+'px', 'top': router.y+'px'}"
-    draggable
-    class="router"
-    [class.selected]="router === selectedRouter"
-    (click)="onSelect(router)"
-    >
-    <div><img width="36" height="36" src="/assets/images/router.svg" alt=""></div>
-    Router {{router.id}}
-  </div>
-</div>
-
-<div *ngFor="let host of hostList">
-  <div
-    class="host"
-    [ngStyle]="{'position': 'absolute', 'left': host.x+'px', 'top': host.y+'px'}"
-    draggable
+<svg width="100%" height="100%" class="svg-bg">
+  <g
+    [style.transform]="'translate(' + canvasOffset.x + 'px, ' + canvasOffset.y + 'px)'"
   >
-    <div>
-      <img width="36" height="36" src="/assets/images/host.svg" alt="">
-    </div>
-    Host {{host.id}}
-  </div>
-</div>
+    <line
+      *ngFor="let link of deviceRegistry.linkList"
+      [attr.x1.px]="link.firstNodePos.x"
+      [attr.y1.px]="link.firstNodePos.y"
+      [attr.x2.px]="link.secondNodePos.x"
+      [attr.y2.px]="link.secondNodePos.y"
+      style="stroke:rgb(154,209,253);stroke-width:2"
+    />
+    <g
+      *ngFor="let router of deviceRegistry.routerList"
+      [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
+    >
+      <image width="36px" height="36px" xlink:href="/assets/images/router.svg" />
+      <text
+      >
+        {{router.label}}
+      </text>
+    </g>
+
+    <g
+      *ngFor="let router of deviceRegistry.hostList"
+    >
+      <image xlink:href="/assets/images/host.svg" />
+      <svg:text
+      >
+        {{host.label}}
+      </svg:text>
+    </g>
+  </g>
+</svg>

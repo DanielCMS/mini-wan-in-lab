@@ -2,6 +2,7 @@ import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Outpu
 import { Host, Router, Link, AddLinkStatus } from '../network-devices/network-devices';
 import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
+import { DeviceRegistry } from '../device-registry.service';
 
 @Component({
   selector: 'app-network-structure',
@@ -10,6 +11,7 @@ import { CanvasStatus } from '../canvas-status';
 })
 export class NetworkStructureComponent implements OnInit, OnChanges{
 
+  @Input() canvasOffset: Vector;
   @Input() isPlacingRouter: boolean;
   @Input() isPlacingHost: boolean;
   @Input() deviceLocation: Vector;
@@ -95,7 +97,8 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     }
   }
 
-  constructor() { }
+  constructor(private deviceRegistry: DeviceRegistry) {
+  }
 
   ngOnInit() {
   }

@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { DeviceRegistry } from '../device-registry.service';
+import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { CanvasStatus } from "../canvas-status";
 
@@ -19,7 +21,8 @@ export class CanvasComponent implements OnInit {
   private isPlacingRouter: boolean = false;
   private isPlacingHost: boolean = false;
 
-  constructor() {}
+  constructor(private deviceRegistry: DeviceRegistry,
+    private panelRegistry: PanelRegistry) {}
 
   ngOnInit() {}
 
@@ -64,15 +67,28 @@ export class CanvasComponent implements OnInit {
     this.isCanvasDragging = false;
   }
 
+  // Transform screen pixel coordinates to un-offset version
+  private normalizePoint(v: Vector): Vector {
+    return {
+      x: v.x - this.offset.x,
+      y: v.y - this.offset.y
+    }
+  }
+
   private placeDevice(e: MouseEvent) {
-    if (!(<HTMLElement>e.target).classList.contains("canvas-holder") && !(<HTMLElement>e.target).classList.contains("svg-bg")) {
+    if (!(<HTMLElement>e.target).classList.contains("svg-bg")) {
       return;
     }
-    if(this.canvasStatus == CanvasStatus.AddingRouter){
-      this.devicePlacement = { x: e.pageX, y: e.pageY };
-      this.isPlacingRouter = true;
+
+    let pageLocation = { x: e.pageX, y: e.pageY };
+    let normalized = this.normalizePoint(pageLocation);
+
+    if (this.canvasStatus == CanvasStatus.AddingRouter) {
+      this.deviceRegistry.addRouter(normalized);
+      this.canvasStatus = CanvasStatus.Idle;
     }
-    if(this.canvasStatus == CanvasStatus.AddingHost){
+
+    if (this.canvasStatus == CanvasStatus.AddingHost) {
       this.devicePlacement = { x: e.pageX, y: e.pageY };
       this.isPlacingHost = true;
     }

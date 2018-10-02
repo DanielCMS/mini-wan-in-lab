@@ -7,6 +7,23 @@ $dark-blue: #7893FF;
 $light-blue: #F1F4F8;
 $orange: #FFAC51;
 
+@mixin user-select($select...) {
+  -webkit-user-select: $select;    /* Chrome all / Safari all */
+  -moz-user-select: $select;    /* Firefox all */
+  -ms-user-select: $select;    /* IE 10+ */
+  -o-user-select: $select;
+  user-select: $select;
+}
+
+@mixin nodrag() {
+  user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
 html,body { 
   width: 100%; 
   height: 100%; 
