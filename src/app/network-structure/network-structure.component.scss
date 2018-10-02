@@ -4,8 +4,13 @@
   position: absolute;
   cursor: grab;
 
-  img {
+  image {
     @include nodrag();
+    pointer-events: none;
+  }
+
+  text {
+    pointer-events: none;
   }
 
   &:active {
@@ -22,6 +27,16 @@
     margin-top: -7px;
     margin-left: -7px;
     padding: 5px;
+  }
+
+  rect {
+    fill: white;
+    stroke: $grey;
+    stroke-width: 2px;
+
+    &:hover {
+      stroke: $orange;
+    }
   }
 }
 

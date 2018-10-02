@@ -10,12 +10,30 @@
       [attr.y2.px]="link.secondNodePos.y"
       style="stroke:rgb(154,209,253);stroke-width:2"
     />
+
     <g
       *ngFor="let router of deviceRegistry.routerList"
       [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
+      class="router"
     >
-      <image width="36px" height="36px" xlink:href="/assets/images/router.svg" />
+      <rect
+        height="60px"
+        width="80px"
+        rx="5px"
+        ry="5px"
+      >
+      </rect>
+      <image
+        x="22px"
+        y="5px"
+        width="36px"
+        height="36px"
+        xlink:href="/assets/images/router.svg"
+      />
       <text
+        x="40px"
+        y="55px"
+        text-anchor="middle"
       >
         {{router.label}}
       </text>
