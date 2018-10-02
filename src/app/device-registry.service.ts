@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Vector } from './vector';
-import { Host, Router, Link } from './network-devices/network-devices';
+import { Host, Router, Link } from './network-devices';
 import { v1 } from 'uuid';
 
 @Injectable({

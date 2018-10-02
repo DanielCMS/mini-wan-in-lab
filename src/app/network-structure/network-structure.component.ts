@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
-import { Host, Router, Link, AddLinkStatus } from '../network-devices/network-devices';
+import { Host, Router, Link, AddLinkStatus } from '../network-devices';
 import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
 import { DeviceRegistry } from '../device-registry.service';
