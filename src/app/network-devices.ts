@@ -1,9 +1,10 @@
 import { Vector } from '../vector';
 
 export class Host {
-  id: number;
-  x: number;
-  y: number;
+  public interfaces: Interface[] = [];
+
+  constructor(public id: string, public label: string, public position: Vector) {
+  }
 }
 
 export class Router {

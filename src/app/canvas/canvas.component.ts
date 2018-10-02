@@ -10,6 +10,7 @@ import { CanvasStatus } from "../canvas-status";
   styleUrls: ['./canvas.component.scss']
 })
 export class CanvasComponent implements OnInit {
+
   private offset: Vector = { x: 0, y: 0 };
   private anchor: Vector;
   private last: Vector;
@@ -89,17 +90,9 @@ export class CanvasComponent implements OnInit {
     }
 
     if (this.canvasStatus == CanvasStatus.AddingHost) {
-      this.devicePlacement = { x: e.pageX, y: e.pageY };
-      this.isPlacingHost = true;
-    }
-  }
-  
-  private finishAddingDevice(): void {
-    requestAnimationFrame(() => {
-      this.isPlacingHost = false;
-      this.isPlacingRouter = false;
+      this.deviceRegistry.addHost(normalized);
       this.canvasStatus = CanvasStatus.Idle;
-    });
+    }
   }
 
 }

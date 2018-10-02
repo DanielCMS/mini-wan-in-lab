@@ -25,4 +25,13 @@ export class DeviceRegistry {
 
     this.routerList.push(new Router(id, label, location));
   }
+
+  public addHost(location: Vector): void {
+    let id = v1();
+    let label = `Host ${this.routerLabelCounter}`;
+
+    this.hostLabelCounter++;
+
+    this.hostList.push(new Router(id, label, location));
+  }
 }

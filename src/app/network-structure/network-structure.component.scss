@@ -10,6 +10,7 @@
   }
 
   text {
+    @include user-select(none);
     pointer-events: none;
   }
 
@@ -42,4 +43,14 @@
 
 .host {
   @extend %network-elements;
+
+  rect {
+    fill: white;
+    stroke: $grey;
+    stroke-width: 2px;
+
+    &:hover {
+      stroke: $orange;
+    }
+  }
 }

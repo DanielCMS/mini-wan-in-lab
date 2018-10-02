@@ -40,13 +40,31 @@
     </g>
 
     <g
-      *ngFor="let router of deviceRegistry.hostList"
+      *ngFor="let host of deviceRegistry.hostList"
+      [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
+      class="host"
     >
-      <image xlink:href="/assets/images/host.svg" />
-      <svg:text
+      <rect
+        height="60px"
+        width="60px"
+        rx="5px"
+        ry="5px"
+      >
+      </rect>
+      <image
+        x="12px"
+        y="5px"
+        width="36px"
+        height="36px"
+        xlink:href="/assets/images/host.svg"
+      />
+      <text
+        x="30px"
+        y="55px"
+        text-anchor="middle"
       >
         {{host.label}}
-      </svg:text>
+      </text>
     </g>
   </g>
 </svg>

@@ -12,18 +12,8 @@ import { DeviceRegistry } from '../device-registry.service';
 export class NetworkStructureComponent implements OnInit, OnChanges{
 
   @Input() canvasOffset: Vector;
-  @Input() isPlacingRouter: boolean;
-  @Input() isPlacingHost: boolean;
-  @Input() deviceLocation: Vector;
   @Input() canvasStatus: CanvasStatus;
-  @Output() finishAdding = new EventEmitter<void>();
 
-  private routerList: Router[] = [];
-  private hostList: Host[] = [];
-  private linkList: Link[] = [];
-  private routerIdCounter: number = 0;
-  private hostIdCounter: number = 0;
-  private linkIdCounter: number = 0;
   private selectedRouter: Router;
   private selectedHost: Host;
   private addLinkStatus: AddLinkStatus = AddLinkStatus.Idle;
