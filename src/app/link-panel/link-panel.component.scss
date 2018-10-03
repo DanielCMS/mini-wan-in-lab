@@ -73,5 +73,19 @@
       font-family: Lato-Regular;
       font-size: 14px;
     }
+
+    td.unit {
+      text-align: left;
+    }
+
+    input {
+      display: inline;
+      width: 60px;
+      text-align: right;
+      padding-right: 5px;
+      font-size: 14px;
+      font-family: Lato-Regular;
+      border: none;
+    }
   }
 }

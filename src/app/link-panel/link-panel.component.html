@@ -18,15 +18,30 @@
   <table>
     <tr>
       <td width="50%">Capacity</td>
-      <td width="50%"></td>
+      <td width="30%">
+        <input [(ngModel)]="model.capacity" />
+      </td>
+      <td width="20%" class="unit">
+        Mbps
+      </td>
     </tr>
     <tr>
-      <td width="50%">Delay</td>
-      <td width="50%"></td>
+      <td>Delay</td>
+      <td>
+        <input [(ngModel)]="model.delay"/>
+      </td>
+      <td class="unit">
+        ms
+      </td>
     </tr>
     <tr>
-      <td width="50%">Loss Rate</td>
-      <td width="50%"></td>
+      <td>Loss Rate</td>
+      <td>
+        <input [(ngModel)]="model.lossRate"/>
+      </td>
+      <td class="unit">
+        %
+      </td>
     </tr>
   </table>
   <span class="title">Monitoring</span>

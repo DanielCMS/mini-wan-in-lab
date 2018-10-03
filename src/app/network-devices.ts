@@ -51,8 +51,15 @@ export class Router extends Device {
   }
 }
 
+const DEFAULT_CAP = 10;
+const DEFAULT_DELAY = 10;
+const DEFAULT_LOSS_RATE = 0.1;
+
 export class Link {
   public isLink: boolean = true;
+  public capacity: number = DEFAULT_CAP;
+  public delay: number = DEFAULT_DELAY;
+  public lossRate: number = DEFAULT_LOSS_RATE;
 
   constructor(public id: string, public src: Device, public dst: Device) {
   }
