@@ -1,11 +1,12 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import { fromEvent, Subject } from 'rxjs';
 import { switchMap, takeUntil } from "rxjs/operators";
-import { Host, Router, Link } from '../network-devices';
+import { Device, Host, Router, Link } from '../network-devices';
 import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
 import { DeviceRegistry } from '../device-registry.service';
 
+const STATIC_CLICK_DELTA = 3;
 @Component({
   selector: 'app-network-structure',
   templateUrl: './network-structure.component.html',
@@ -15,6 +16,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
 
   @Input() canvasOffset: Vector;
   @Input() canvasStatus: CanvasStatus;
+  @Input() activeDeviceId: string;
 
   private linkTemp: Link;
   private tmpDevice: Device;
@@ -22,8 +24,14 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
   private targetPosition: Vector;
   private CanvasStatus = CanvasStatus;
 
+  private mouseDownPosition: Vector;
+  private mouseDownId: string;
+  private _target: Device;
+
   private linkMoveStart$ = new Subject<void>();
   private linkMoveStop$ = new Subject<void>();
+  private followTargetStart$ = new Subject<void>();
+  private followTargetStop$ = new Subject<void>();
 
   constructor(private deviceRegistry: DeviceRegistry) {
   }
@@ -40,9 +48,19 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     ).subscribe((e: MouseEvent) => {
       this.updateTargetPosition(e);
     });
+
+    this.followTargetStart$.pipe(
+      switchMap(() => {
+        return mouseMove$.pipe(
+          takeUntil(this.followTargetStop$)
+        );
+      })
+    ).subscribe(() => {
+      this.followTarget();
+    });
   }
 
-  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+  ngOnChanges(changes: SimpleChanges) {
     // Reset tmp device during link adding if canvas status changed
     for (let propName in changes) {
       if (propName === "canvasStatus") {
@@ -65,7 +83,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
   private connectPointClicked(id: string, e: MouseEvent): void {
     if (this.canvasStatus === CanvasStatus.AddingLink) {
       if (this.tmpDevice) {
-        this.deviceClicked(id);
+        this.deviceClicked(id, e);
       } else {
         this.tmpDevice = this.deviceRegistry.getDeviceById(id);
         this.tmpDeviceId = id;
@@ -76,15 +94,19 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     }
   }
 
+  private followTarget(): void {
+    this.targetPosition = this._target.position;
+  }
+
   private deviceEntered(id: string): void {
     if (!this.tmpDevice || id === this.tmpDeviceId) {
       return;
     }
 
-    let target = this.deviceRegistry.getDeviceById(id);
-
-    this.targetPosition = target.position;
+    this._target = this.deviceRegistry.getDeviceById(id);
+    this.followTarget();
     this.linkMoveStop$.next();
+    this.followTargetStart$.next();
   }
 
   private deviceDetached(id: string, e: MouseEvent): void {
@@ -94,18 +116,50 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
 
     this.updateTargetPosition(e);
     this.linkMoveStart$.next();
+    this.followTargetStop$.next();
   }
 
-  private deviceClicked(id: string): void {
-    if (!this.tmpDevice || id === this.tmpDeviceId) {
+  private deviceMouseDown(id: string, e: MouseEvent): void {
+    this.mouseDownPosition = {
+      x: e.pageX,
+      y: e.pageY
+    };
+    this.mouseDownId = id;
+  }
+
+  private deviceMouseUp(id: string, e: MouseEvent): void {
+    if (this.mouseDownId !== id) {
       return;
     }
 
-    let target = this.deviceRegistry.getDeviceById(id);
+    if (Math.abs(e.pageX - this.mouseDownPosition.x) > STATIC_CLICK_DELTA) {
+      return;
+    }
 
-    this.deviceRegistry.addLink(this.tmpDevice, target);
-    this.resetTmpDevice();
-    this.linkMoveStop$.next();
+    if (Math.abs(e.pageY - this.mouseDownPosition.y) > STATIC_CLICK_DELTA) {
+      return;
+    }
+
+    this.deviceClicked(id, e);
+  }
+
+  private deviceClicked(id: string, e: MouseEvent): void {
+    if (this.canvasStatus !== CanvasStatus.AddingLink || id === this.tmpDeviceId) {
+      return;
+    }
+
+    if (!this.tmpDevice) {
+      this.tmpDevice = this.deviceRegistry.getDeviceById(id);
+      this.tmpDeviceId = id;
+      this.updateTargetPosition(e);
+      this.linkMoveStart$.next();
+    } else {
+      let target = this.deviceRegistry.getDeviceById(id);
+
+      this.deviceRegistry.addLink(this.tmpDevice, target);
+      this.resetTmpDevice();
+      this.linkMoveStop$.next();
+    }
   }
 
   private resetTmpDevice(): void {

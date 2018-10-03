@@ -8,6 +8,7 @@ import { CanvasStatus } from '../canvas-status';
 })
 export class ControlsComponent implements OnInit {
   @Input() canvasStatus: CanvasStatus;
+  @Input() activeDeviceId: string;
   @Output() addRouterClicked = new EventEmitter<void>();
   @Output() addHostClicked = new EventEmitter<void>();
   @Output() addLinkClicked = new EventEmitter<void>();  
@@ -26,8 +27,7 @@ export class ControlsComponent implements OnInit {
   }
 
   private elementSelected(): boolean {
-    return [CanvasStatus.RouterSelected, CanvasStatus.HostSelected,
-      CanvasStatus.LinkSelected].includes(this.canvasStatus);
+    return !!this.activeDeviceId;
   }
 
   private addRouter(): void {

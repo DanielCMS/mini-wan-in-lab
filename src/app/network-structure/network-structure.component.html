@@ -2,14 +2,37 @@
   <g
     [style.transform]="'translate(' + canvasOffset.x + 'px, ' + canvasOffset.y + 'px)'"
   >
-    <line
+    <g
       *ngFor="let link of deviceRegistry.linkList"
-      [attr.x1.px]="link.src.position.x"
-      [attr.y1.px]="link.src.position.y"
-      [attr.x2.px]="link.dst.position.x"
-      [attr.y2.px]="link.dst.position.y"
-      class="line"
-    />
+      class="link"
+      [class.active]="activeDeviceId === link.id"
+    >
+      <line class="link-border"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="link-border-in"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="link-stroke"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="shadow-link link-handle"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+        [id]="link.id"
+      ></line>
+    </g>
 
     <line
       *ngIf="tmpDevice"
@@ -24,9 +47,11 @@
       *ngFor="let router of deviceRegistry.routerList"
       [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
       class="router"
+      [class.active]="activeDeviceId === router.id"
       (mouseenter)="deviceEntered(router.id)"
       (mouseleave)="deviceDetached(router.id, $event)"
-      (click)="deviceClicked(router.id)"
+      (mousedown)="deviceMouseDown(router.id, $event)"
+      (mouseup)="deviceMouseUp(router.id, $event)"
     >
       <g transform="translate(0, -30)">
         <rect
@@ -63,10 +88,12 @@
     <g
       *ngFor="let host of deviceRegistry.hostList"
       [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
-      class="host topology-elements"
+      class="host"
+      [class.active]="activeDeviceId === host.id"
       (mouseenter)="deviceEntered(host.id)"
       (mouseleave)="deviceDetached(host.id, $event)"
-      (click)="deviceClicked(host.id)"
+      (mousedown)="deviceMouseDown(host.id, $event)"
+      (mouseup)="deviceMouseUp(host.id, $event)"
     >
       <g transform="translate(0, -30)">
         <rect

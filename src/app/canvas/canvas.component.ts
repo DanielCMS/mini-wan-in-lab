@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { filter, switchMap, takeUntil, map, tap } from "rxjs/operators";
+import { Router, Host } from '../network-devices';
 import { DeviceRegistry } from '../device-registry.service';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { CanvasStatus } from "../canvas-status";
 
-const CLICK_DELTA = 3;
+const CLICK_DELTA = 5;
 
 @Component({
   selector: 'app-canvas',
@@ -26,9 +27,8 @@ export class CanvasComponent implements OnInit {
   private isCanvasDragging: boolean = false;
   private isDeviceDragging: boolean = false;
 
-  private devicePlacement: Vector;
-  private isPlacingRouter: boolean = false;
-  private isPlacingHost: boolean = false;
+  private activeDeviceId: string;
+  private idOfDraggingDevice: string;
 
   constructor(private deviceRegistry: DeviceRegistry,
     private panelRegistry: PanelRegistry) {}
@@ -51,13 +51,16 @@ export class CanvasComponent implements OnInit {
   }
 
   private requestDeleting(): void {
+    this.deviceRegistry.removeElementById(this.activeDeviceId);
     this.canvasStatus = CanvasStatus.Idle;
+    this.activeDeviceId = null;
   }
 
-  prviate setupKeyboardEvents(): void {
+  private setupKeyboardEvents(): void {
     fromEvent(document, 'keydown').subscribe((e: KeyboardEvent) => {
       if (e.key === "Escape") {
         this.canvasStatus = CanvasStatus.Idle;
+        this.activeDeviceId = null;
       }
     });
   }
@@ -69,8 +72,9 @@ export class CanvasComponent implements OnInit {
         let target = <HTMLElement>e.target;
         let classList = (<HTMLElement>e.target).classList;
 
-        return classList.contains("svg-bg") || classList.contains("topology-elements");
-      })
+        return classList.contains("svg-bg") || classList.contains("topology-elements")
+          || classList.contains("link-handle");
+      }),
       tap((e: MouseEvent) => {
         this.mouseDownLocation = {
           x: e.pageX,
@@ -88,7 +92,7 @@ export class CanvasComponent implements OnInit {
         }
 
         this.mouseUp();
-      }),
+      })
     );
 
     let mousedrag$ = mousedown$.pipe(
@@ -102,7 +106,7 @@ export class CanvasComponent implements OnInit {
       requestAnimationFrame(() => {
         this.mouseMove(e);
       });
-    }
+    });
   }
 
   private mouseDown(e: MouseEvent): void {
@@ -152,16 +156,33 @@ export class CanvasComponent implements OnInit {
   }
 
   private mouseClick(e: MouseEvent): void {
-    let pageLocation = { x: e.pageX, y: e.pageY };
-    let normalized = this.normalizePoint(pageLocation);
+    let target = <HTMLElement>e.target;
+    let classList = target.classList;
 
-    if (this.canvasStatus === CanvasStatus.AddingRouter) {
-      this.deviceRegistry.addRouter(normalized);
+    if (classList.contains("svg-bg")) {
+      let pageLocation = { x: e.pageX, y: e.pageY };
+      let normalized = this.normalizePoint(pageLocation);
+
+      if (this.canvasStatus === CanvasStatus.AddingRouter) {
+        this.deviceRegistry.addRouter(normalized);
+      } else if (this.canvasStatus === CanvasStatus.AddingHost) {
+        this.deviceRegistry.addHost(normalized);
+      } else {
+        this.activeDeviceId = null;
+      }
+
+      return;
     }
 
-    if (this.canvasStatus === CanvasStatus.AddingHost) {
-      this.deviceRegistry.addHost(normalized);
+    if (classList.contains("topology-elements") && this.canvasStatus === CanvasStatus.AddingLink) {
+        return;
     }
+
+    let element = this.deviceRegistry.getElementById(target.id);
+
+    this.activeDeviceId = target.id;
+    this.panelRegistry.openPanelFor(element);
+    this.canvasStatus = CanvasStatus.Idle;
   }
 
   // Transform screen pixel coordinates to un-offset version

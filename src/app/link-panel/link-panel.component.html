@@ -1,3 +1,48 @@
-<p>
-  link-panel works!
-</p>
+<div
+  class="link-panel"
+  [id]="'panel-' + model.id"
+  [style.top.px]="anchor.y"
+  [style.left.px]="anchor.x"
+  draggable
+  [dragHandle]="'#panel-' + model.id + ' .handle'"
+>
+  <div class="handle">
+    <img width="18" height="18" src="/assets/images/cable.svg" alt="">
+    <span class="title-text">{{model.src.label}} &harr; {{model.dst.label}}</span>
+    <span class="cross" (click)="closePanel()">✕</span>
+  </div>
+
+  <hr>
+
+  <span class="title">Details</span>
+  <table>
+    <tr>
+      <td width="50%">Capacity</td>
+      <td width="30%">
+        <input [(ngModel)]="model.capacity" />
+      </td>
+      <td width="20%" class="unit">
+        Mbps
+      </td>
+    </tr>
+    <tr>
+      <td>Delay</td>
+      <td>
+        <input [(ngModel)]="model.delay"/>
+      </td>
+      <td class="unit">
+        ms
+      </td>
+    </tr>
+    <tr>
+      <td>Loss Rate</td>
+      <td>
+        <input [(ngModel)]="model.lossRate"/>
+      </td>
+      <td class="unit">
+        %
+      </td>
+    </tr>
+  </table>
+  <span class="title">Monitoring</span>
+</div>

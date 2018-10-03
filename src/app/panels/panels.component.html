@@ -1,0 +1,26 @@
+<div *ngFor="let element of panelRegistry.panels">
+  <app-router-panel
+    *ngIf="element.isRouter"
+    [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (mousedown)="bringToTop(element)"
+  >
+  </app-router-panel>
+  <app-host-panel
+    *ngIf="element.isHost"
+    [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (mousedown)="bringToTop(element)"
+  >
+  </app-host-panel>
+  <app-link-panel
+    *ngIf="element.isLink"
+    [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (mousedown)="bringToTop(element)"
+  >
+  </app-link-panel>
+</div>

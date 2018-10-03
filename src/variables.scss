@@ -8,6 +8,7 @@ $dark-blue: #7893FF;
 $light-blue: #F1F4F8;
 $lighter-blue: #DDF1FF;
 $orange: #FFAC51;
+$red: #FF6060;
 
 @mixin user-select($select...) {
   -webkit-user-select: $select;    /* Chrome all / Safari all */
@@ -31,83 +32,4 @@ $orange: #FFAC51;
   -o-transition: $transition;
   -webkit-transition: $transition;
   transition: $transition;
-}
-
-html,body { 
-  width: 100%; 
-  height: 100%; 
-  margin: 0;
-  position: relative;
-}
-
-.display-flex {
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flex;
-}
-
-.display-flex-center {
-  @extend .display-flex;
-
-  align-items: center; /* y */
-  -webkit-align-items: center;
-  -ms-flex-align: center;
-  justify-content: center; /* x */
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-}
-
-.display-flex-y-center {
-  @extend .display-flex;
-
-  align-items: center; /* y */
-  -webkit-align-items: center;
-  -ms-flex-align: center;
-}
-
-.display-flex-x-center {
-  @extend .display-flex;
-
-  justify-content: center; /* x */
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-}
-
-.display-column-flex {
-  @extend .display-flex;
-
-  flex-direction: column;
-}
-
-.display-row-flex {
-  @extend .display-flex;
-
-  flex-direction: row;
-}
-
-.flex-x-end {
-  justify-content: flex-end;  /* x */
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-}
-
-.flex-flow-colunm {
-  -webkit-flex-flow: column;
-  flex-flow: column;
-  -ms-flex-pack: justify;
-}
-
-.flex-flow-row-wrap {
-  flex-flow: row wrap;
-  -webkit-flex-flow: row wrap;
-  -ms-flex-wrap: wrap;
-}
-
-.top-bar-default {
-  border-bottom: 1px solid $grey;
-  background: $transparent-black;
-  width: 100%;
-  height: 64px;
-  position: relative;
-  z-index: 10000;
 }

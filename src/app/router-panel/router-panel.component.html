@@ -1,52 +1,57 @@
 <div
   class="router-panel"
-  [id]="'panel-' + '123'"
-  [style.top.px]="220"
-  [style.left.px]="200"
-  draggable 
-  [dragHandle]="'#panel-' + '123' + ' .handle'"
+  [id]="'panel-' + model.id"
+  [style.top.px]="anchor.y"
+  [style.left.px]="anchor.x"
+  draggable
+  [dragHandle]="'#panel-' + model.id + ' .handle'"
 >
   <div class="handle">
     <img width="18" height="18" src="/assets/images/router.svg" alt="">
-    <span class="title-text">Router Details</span>
+    <span class="title-text">{{model.label}}</span>
+    <span class="cross" (click)="closePanel()">✕</span>
   </div>
 
   <hr>
 
-  <span class="strong">Name</span>
-  R1
-
-  <hr>
-
-  <span class="strong">Interfaces</span>
+  <span class="title">Interfaces</span>
   <table>
     <tr>
-      <td>Interface</td>
-      <td>10.0.0.1</td>
+      <th width="50%">Port</th>
+      <th width="50%">IP</th>
+    </tr>
+    <tr *ngFor="let interface of model.interfaces">
+      <td>{{interface.port}}</td>
+      <td>{{interface.ip}}</td>
     </tr>
   </table>
 
-  <span class="strong">Neighbor Table</span>
+  <span class="title">Neighbor Table</span>
   <table>
     <tr>
-      <td>Interface</td>
-      <td>10.0.0.1</td>
+      <th width="50%">Neighbor</th>
+      <th width="50%">Port</th>
+    </tr>
+    <tr *ngFor="let interface of model.interfaces">
+      <td>{{interface.link.getOtherEnd(model).label}}</td>
+      <td>{{interface.port}}</td>
     </tr>
   </table>
 
-  <span class="strong">Link State Table</span>
+  <span class="title">Link State Table</span>
   <table>
     <tr>
-      <td>Interface</td>
-      <td>10.0.0.1</td>
+      <th width="30%">Source</th>
+      <th width="30%">Target</th>
+      <th width="40%">Cost</th>
     </tr>
   </table>
 
-  <span class="strong">Shortest Path Table</span>
+  <span class="title">Shortest Path Table</span>
   <table>
     <tr>
-      <td>Interface</td>
-      <td>10.0.0.1</td>
+      <th width="50%">IP</th>
+      <th width="50%">Next Hop</th>
     </tr>
   </table>
 </div>

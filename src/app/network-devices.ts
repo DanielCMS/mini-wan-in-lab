@@ -1,48 +1,78 @@
-import { Vector } from '../vector';
+import { Vector } from './vector';
 
 export class Device {
   public interfaces: Interface[] = [];
 
+  private portCounter: number = 0;
+
   constructor(public id: string, public label: string, public position: Vector) {
   }
 
-  panBy(delta: Vector) {
+  public panBy(delta: Vector): void {
     this.position = {
       x: this.position.x + delta.x,
       y: this.position.y + delta.y
     };
   }
+
+  public attachLink(link: Link, ip: string): void {
+    this.portCounter++;
+    this.interfaces.push(new Interface(this.portCounter, ip, link));
+  }
+
+  public detachLink(link: Link): void {
+    this.interfaces = this.interfaces.filter(intf => intf.link !== link);
+  }
 }
 
 export class Host extends Device {
-  constructor(public id: string, public label: string, public position: Vector) {
-    let offsetPosition = {
-      x: position.x - 12,
-      y: position.y + 25
-    };
+  public isHost: boolean = true;
 
-    super(id, label, offsetPosition);
+  constructor(public id: string, public label: string, public position: Vector) {
+    super(id, label, position);
+
+    this.position = {
+      x: this.position.x - 12,
+      y: this.position.y + 25
+    };
   }
 }
 
 export class Router extends Device {
-  constructor(public id: string, public label: string, public position: Vector) {
-    let offsetPosition = {
-      x: position.x - 22,
-      y: position.y + 25
-    };
+  public isRouter: boolean = true;
 
-    super(id, label, offsetPosition);
+  constructor(public id: string, public label: string, public position: Vector) {
+    super(id, label, position);
+
+    this.position = {
+      x: this.position.x - 22,
+      y: this.position.y + 25
+    };
   }
 }
 
+const DEFAULT_CAP = 10;
+const DEFAULT_DELAY = 10;
+const DEFAULT_LOSS_RATE = 0.1;
+
 export class Link {
+  public isLink: boolean = true;
+  public capacity: number = DEFAULT_CAP;
+  public delay: number = DEFAULT_DELAY;
+  public lossRate: number = DEFAULT_LOSS_RATE;
+
   constructor(public id: string, public src: Device, public dst: Device) {
+  }
+
+  public getOtherEnd(element: Device): Device {
+    if (element === this.src) {
+      return this.dst;
+    } else {
+      return this.src;
+    }
   }
 }
 
 export class Interface {
-  port: number;
-  srcId: string;
-  dstId: string;
+  constructor(public port: number, public ip: string, public link: Link) {}
 }
