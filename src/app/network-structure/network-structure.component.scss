@@ -12,7 +12,8 @@
   text {
     @include user-select(none);
     pointer-events: none;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: Lato-Regular;
   }
 
   &:active {

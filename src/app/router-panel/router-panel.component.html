@@ -3,7 +3,7 @@
   [id]="'panel-' + model.id"
   [style.top.px]="anchor.y"
   [style.left.px]="anchor.x"
-  draggable 
+  draggable
   [dragHandle]="'#panel-' + model.id + ' .handle'"
 >
   <div class="handle">
@@ -17,8 +17,8 @@
   <span class="title">Interfaces</span>
   <table>
     <tr>
-      <th width="30%">Port</th>
-      <th width="70%">IP</th>
+      <th width="50%">Port</th>
+      <th width="50%">IP</th>
     </tr>
     <tr *ngFor="let interface of model.interfaces">
       <td>{{interface.port}}</td>
@@ -29,8 +29,8 @@
   <span class="title">Neighbor Table</span>
   <table>
     <tr>
-      <th width="70%">Neighbor</th>
-      <th width="30%">Port</th>
+      <th width="50%">Neighbor</th>
+      <th width="50%">Port</th>
     </tr>
     <tr *ngFor="let interface of model.interfaces">
       <td>{{interface.link.getOtherEnd(model).label}}</td>
@@ -43,7 +43,7 @@
     <tr>
       <th width="30%">Source</th>
       <th width="30%">Target</th>
-      <th width="40%">Weight</th>
+      <th width="40%">Cost</th>
     </tr>
   </table>
 

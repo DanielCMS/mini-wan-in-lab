@@ -1,6 +1,6 @@
 @import "../../variables.scss";
 
-.router-panel {
+.host-panel {
   border: $dark-blue solid 2px;
   border-radius: 10px;
   position: absolute;
@@ -72,10 +72,6 @@
       text-align: center;
       font-family: Lato-Regular;
       font-size: 14px;
-    }
-
-    tr:nth-child(2) {
-      border-top: $grey 1px solid;
     }
   }
 }

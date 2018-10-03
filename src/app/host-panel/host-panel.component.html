@@ -1,3 +1,28 @@
-<p>
-  host-panel works!
-</p>
+<div
+  class="host-panel"
+  [id]="'panel-' + model.id"
+  [style.top.px]="anchor.y"
+  [style.left.px]="anchor.x"
+  draggable
+  [dragHandle]="'#panel-' + model.id + ' .handle'"
+>
+  <div class="handle">
+    <img width="18" height="18" src="/assets/images/host.svg" alt="">
+    <span class="title-text">{{model.label}}</span>
+    <span class="cross" (click)="closePanel()">✕</span>
+  </div>
+
+  <hr>
+
+  <span class="title">Details</span>
+  <table>
+    <tr>
+      <td width="40%">IP:</td>
+      <td width="60%">{{model.interfaces.length > 0 ? model.interfaces[0].ip : "N/A"}}</td>
+    </tr>
+    <tr>
+      <td>Gateway:</td>
+      <td>{{model.interfaces.length > 0 ? model.interfaces[0].link.getOtherEnd(model).label : "N/A"}}</td>
+    </tr>
+  </table>
+</div>
