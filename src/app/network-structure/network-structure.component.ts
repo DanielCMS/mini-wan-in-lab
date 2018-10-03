@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import { fromEvent, Subject } from 'rxjs';
 import { switchMap, takeUntil } from "rxjs/operators";
-import { Host, Router, Link } from '../network-devices';
+import { Device, Host, Router, Link } from '../network-devices';
 import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
 import { DeviceRegistry } from '../device-registry.service';
@@ -15,6 +15,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
 
   @Input() canvasOffset: Vector;
   @Input() canvasStatus: CanvasStatus;
+  @Input() activeDeviceId: string;
 
   private linkTemp: Link;
   private tmpDevice: Device;
@@ -42,7 +43,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     });
   }
 
-  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+  ngOnChanges(changes: SimpleChanges) {
     // Reset tmp device during link adding if canvas status changed
     for (let propName in changes) {
       if (propName === "canvasStatus") {

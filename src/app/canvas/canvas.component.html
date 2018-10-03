@@ -8,6 +8,7 @@
 >
   <app-controls
     [canvasStatus]="canvasStatus"
+    [activeDeviceId]="activeDeviceId"
     (addRouterClicked)="requestAddingRouter()"
     (addHostClicked)="requestAddingHost()"
     (addLinkClicked)="requestAddingLink()"
@@ -17,6 +18,7 @@
   <app-network-structure 
     [canvasOffset]="offset"
     [canvasStatus]="canvasStatus"
+    [activeDeviceId]="activeDeviceId"
   >    
   </app-network-structure>
 </div>

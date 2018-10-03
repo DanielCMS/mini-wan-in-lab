@@ -24,6 +24,7 @@
       *ngFor="let router of deviceRegistry.routerList"
       [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
       class="router"
+      [class.active]="activeDeviceId === router.id"
       (mouseenter)="deviceEntered(router.id)"
       (mouseleave)="deviceDetached(router.id, $event)"
       (click)="deviceClicked(router.id)"
@@ -63,7 +64,8 @@
     <g
       *ngFor="let host of deviceRegistry.hostList"
       [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
-      class="host topology-elements"
+      class="host"
+      [class.active]="activeDeviceId === host.id"
       (mouseenter)="deviceEntered(host.id)"
       (mouseleave)="deviceDetached(host.id, $event)"
       (click)="deviceClicked(host.id)"
