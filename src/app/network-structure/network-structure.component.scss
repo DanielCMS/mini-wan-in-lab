@@ -51,9 +51,60 @@
   stroke-width: 2px;
 }
 
-.line {
-  stroke: $grey;
-  stroke-width: 2px;
+.link {
+  cursor: pointer;
+
+  .link-border {
+    stroke-linecap: butt;
+    stroke-width: 8;
+    stroke-opacity: 0;
+    stroke: $orange;
+    pointer-events: none;
+  }
+
+  .shadow-link {
+    stroke-width: 20;
+    stroke-linecap: butt;
+    stroke-opacity: 0;
+    pointer-events: all;
+  }
+
+  .link-border-in {
+    stroke-linecap: butt;
+    stroke-width: 6;
+    stroke-opacity: 0;
+    stroke: $white;
+    fill: $white;
+    pointer-events: none;
+  }
+
+  .link-stroke {
+    stroke: $grey;
+    stroke-width: 2px;
+    pointer-events: none;
+  }
+
+  &:hover {
+    .link-border-in {
+      stroke-opacity: 1;
+    }
+
+    .link-border {
+      stroke-opacity: 1;
+    }
+  }
+
+  &.active {
+    .link-border-in {
+      stroke-width: 3;
+      stroke-opacity: 1;
+      stroke: $white;
+    }
+
+    .link-border {
+      stroke-opacity: 1;
+    }
+  }
 }
 
 .connect-point {

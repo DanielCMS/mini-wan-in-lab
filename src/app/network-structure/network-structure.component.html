@@ -2,14 +2,37 @@
   <g
     [style.transform]="'translate(' + canvasOffset.x + 'px, ' + canvasOffset.y + 'px)'"
   >
-    <line
+    <g
       *ngFor="let link of deviceRegistry.linkList"
-      [attr.x1.px]="link.src.position.x"
-      [attr.y1.px]="link.src.position.y"
-      [attr.x2.px]="link.dst.position.x"
-      [attr.y2.px]="link.dst.position.y"
-      class="line"
-    />
+      class="link"
+      [class.active]="activeDeviceId === link.id"
+    >
+      <line class="link-border"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="link-border-in"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="link-stroke"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+      ></line>
+      <line class="shadow-link link-handle"
+        [attr.x1.px]="link.src.position.x"
+        [attr.y1.px]="link.src.position.y"
+        [attr.x2.px]="link.dst.position.x"
+        [attr.y2.px]="link.dst.position.y"
+        [id]="link.id"
+      ></line>
+    </g>
 
     <line
       *ngIf="tmpDevice"

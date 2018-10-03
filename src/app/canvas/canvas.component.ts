@@ -7,7 +7,7 @@ import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { CanvasStatus } from "../canvas-status";
 
-const CLICK_DELTA = 3;
+const CLICK_DELTA = 5;
 
 @Component({
   selector: 'app-canvas',
@@ -64,6 +64,7 @@ export class CanvasComponent implements OnInit {
     fromEvent(document, 'keydown').subscribe((e: KeyboardEvent) => {
       if (e.key === "Escape") {
         this.canvasStatus = CanvasStatus.Idle;
+        this.activeDeviceId = null;
       }
     });
   }
@@ -75,7 +76,8 @@ export class CanvasComponent implements OnInit {
         let target = <HTMLElement>e.target;
         let classList = (<HTMLElement>e.target).classList;
 
-        return classList.contains("svg-bg") || classList.contains("topology-elements");
+        return classList.contains("svg-bg") || classList.contains("topology-elements")
+          || classList.contains("link-handle");
       }),
       tap((e: MouseEvent) => {
         this.mouseDownLocation = {
@@ -161,16 +163,7 @@ export class CanvasComponent implements OnInit {
     let target = <HTMLElement>e.target;
     let classList = target.classList;
 
-    if (classList.contains("topology-elements")) {
-      if (this.canvasStatus === CanvasStatus.AddingLink) {
-        return;
-      }
-
-      let element = this.deviceRegistry.getElementById(target.id);
-
-      this.activeDeviceId = target.id;
-      this.panelRegistry.openPanelFor(element);
-    } else if (classList.contains("svg-bg")) {
+    if (classList.contains("svg-bg")) {
       let pageLocation = { x: e.pageX, y: e.pageY };
       let normalized = this.normalizePoint(pageLocation);
 
@@ -181,7 +174,18 @@ export class CanvasComponent implements OnInit {
       } else {
         this.activeDeviceId = null;
       }
+
+      return;
     }
+
+    if (classList.contains("topology-elements") && this.canvasStatus === CanvasStatus.AddingLink) {
+        return;
+    }
+
+    let element = this.deviceRegistry.getElementById(target.id);
+
+    this.activeDeviceId = target.id;
+    this.panelRegistry.openPanelFor(element);
   }
 
   // Transform screen pixel coordinates to un-offset version
