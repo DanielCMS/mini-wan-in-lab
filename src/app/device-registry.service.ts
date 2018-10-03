@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Vector } from './vector';
 import { Host, Router, Link, Device } from './network-devices';
 import { v1 } from 'uuid';
+import { PanelRegistry } from './panel-registry.service';
 
 const ACCESS_IP_PREFIX = '192.168.';
 const BACKBONE_IP_PREFIX = '10.0.';
@@ -23,7 +24,7 @@ export class DeviceRegistry {
   private deviceHashTable: { [id: string]: Device } = {};
   private linkHashTable: { [id: string]: Link } = {}; 
 
-  constructor() { 
+  constructor(private panelRegistry: PanelRegistry) {
   }
 
   public addRouter(position: Vector): void {
@@ -103,6 +104,8 @@ export class DeviceRegistry {
 
   public removeElementById(id: string): void {
     let element = this.getElementById(id);
+
+    this.panelRegistry.closePanelFor(element);
 
     if (element instanceof Device) {
       for (let intf of element.interfaces) {

@@ -51,11 +51,7 @@ export class CanvasComponent implements OnInit {
   }
 
   private requestDeleting(): void {
-    let active = this.deviceRegistry.getElementById(this.activeDeviceId);
-
-    this.panelRegistry.closePanelFor(active);
     this.deviceRegistry.removeElementById(this.activeDeviceId);
-
     this.canvasStatus = CanvasStatus.Idle;
     this.activeDeviceId = null;
   }
@@ -186,6 +182,7 @@ export class CanvasComponent implements OnInit {
 
     this.activeDeviceId = target.id;
     this.panelRegistry.openPanelFor(element);
+    this.canvasStatus = CanvasStatus.Idle;
   }
 
   // Transform screen pixel coordinates to un-offset version
