@@ -4,7 +4,7 @@
     [model]="element"
     [canvasOffset]="canvasOffset"
     (close)="closePanel(element)"
-    (click)="bringToTop(element)"
+    (mousedown)="bringToTop(element)"
   >
   </app-router-panel>
   <app-host-panel
@@ -12,7 +12,7 @@
     [model]="element"
     [canvasOffset]="canvasOffset"
     (close)="closePanel(element)"
-    (click)="bringToTop(element)"
+    (mousedown)="bringToTop(element)"
   >
   </app-host-panel>
   <app-link-panel
@@ -20,7 +20,7 @@
     [model]="element"
     [canvasOffset]="canvasOffset"
     (close)="closePanel(element)"
-    (click)="bringToTop(element)"
+    (mousedown)="bringToTop(element)"
   >
   </app-link-panel>
 </div>
