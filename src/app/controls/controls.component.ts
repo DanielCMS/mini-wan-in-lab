@@ -20,6 +20,11 @@ export class ControlsComponent implements OnInit {
   ngOnInit() {
   }
 
+  private isAdding():boolean {
+    return [CanvasStatus.AddingRouter, CanvasStatus.AddingHost,
+      CanvasStatus.AddingLink].includes(this.canvasStatus);
+  }
+
   private addRouter(): void {
     this.addRouterClicked.emit();
   }

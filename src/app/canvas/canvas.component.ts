@@ -65,6 +65,12 @@ export class CanvasComponent implements OnInit {
   private setupMouseEvents(): void {
     let mousedown$ = fromEvent(document, 'mousedown').pipe(
       filter((e: MouseEvent) => e.button === 0),
+      filter((e: MouseEvent) => {
+        let target = <HTMLElement>e.target;
+        let classList = (<HTMLElement>e.target).classList;
+
+        return classList.contains("svg-bg") || classList.contains("topology-elements");
+      })
       tap((e: MouseEvent) => {
         this.mouseDownLocation = {
           x: e.pageX,
@@ -113,12 +119,9 @@ export class CanvasComponent implements OnInit {
     } else if (classList.contains("topology-elements")) {
       let id = target.id;
 
-      if (this.canvasStatus === CanvasStatus.AddingLink) {
-      } else {
-        this.last = { x: e.pageX, y: e.pageY };
-        this.idOfDraggingDevice = id;
-        this.isDeviceDragging = true;
-      }
+      this.last = { x: e.pageX, y: e.pageY };
+      this.idOfDraggingDevice = id;
+      this.isDeviceDragging = true;
     }
   }
 
@@ -154,12 +157,10 @@ export class CanvasComponent implements OnInit {
 
     if (this.canvasStatus === CanvasStatus.AddingRouter) {
       this.deviceRegistry.addRouter(normalized);
-      this.canvasStatus = CanvasStatus.Idle;
     }
 
     if (this.canvasStatus === CanvasStatus.AddingHost) {
       this.deviceRegistry.addHost(normalized);
-      this.canvasStatus = CanvasStatus.Idle;
     }
   }
 
@@ -170,24 +171,4 @@ export class CanvasComponent implements OnInit {
       y: v.y - this.offset.y
     }
   }
-
-  private placeDevice(e: MouseEvent) {
-    if (!(<HTMLElement>e.target).classList.contains("svg-bg")) {
-      return;
-    }
-
-    let pageLocation = { x: e.pageX, y: e.pageY };
-    let normalized = this.normalizePoint(pageLocation);
-
-    if (this.canvasStatus == CanvasStatus.AddingRouter) {
-      this.deviceRegistry.addRouter(normalized);
-      this.canvasStatus = CanvasStatus.Idle;
-    }
-
-    if (this.canvasStatus == CanvasStatus.AddingHost) {
-      this.deviceRegistry.addHost(normalized);
-      this.canvasStatus = CanvasStatus.Idle;
-    }
-  }
-
 }
