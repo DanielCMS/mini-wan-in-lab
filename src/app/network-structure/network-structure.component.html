@@ -11,10 +11,22 @@
       style="stroke:rgb(154,209,253);stroke-width:2"
     />
 
+    <line
+      *ngIf="tmpDevice"
+      [attr.x1.px]="tmpDevice.position.x - canvasOffset.x"
+      [attr.y1.px]="tmpDevice.position.y - canvasOffset.y"
+      [attr.x2.px]="targetPosition.x - canvasOffset.x"
+      [attr.y2.px]="targetPosition.y - canvasOffset.y"
+      class="tmp-line"
+    />
+
     <g
       *ngFor="let router of deviceRegistry.routerList"
       [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
       class="router"
+      (mouseenter)="deviceEntered(router.id)"
+      (mouseleave)="deviceDetached(router.id, $event)"
+      (click)="deviceClicked(router.id)"
     >
       <g transform="translate(0, -30)">
         <rect
@@ -40,7 +52,8 @@
       <g
         class="connect-point"
         [class.editable]="canvasStatus === CanvasStatus.AddingLink"
-        [class.is-active]="selectedId === router.id"
+        [class.is-active]="tmpDeviceId === router.id"
+        (click)="connectPointClicked(router.id, $event)"
       >
         <circle cx="0" cy="0" r="5" class="frame"></circle>
         <circle cx="0" cy="0" r="2" class="bob"></circle>
@@ -51,6 +64,9 @@
       *ngFor="let host of deviceRegistry.hostList"
       [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
       class="host topology-elements"
+      (mouseenter)="deviceEntered(host.id)"
+      (mouseleave)="deviceDetached(host.id, $event)"
+      (click)="deviceClicked(host.id)"
     >
       <g transform="translate(0, -30)">
         <rect
@@ -80,7 +96,8 @@
       <g
         class="connect-point"
         [class.editable]="canvasStatus === CanvasStatus.AddingLink"
-        [class.is-active]="selectedId === host.id"
+        [class.is-active]="tmpDeviceId === host.id"
+        (click)="connectPointClicked(host.id, $event)"
       >
         <circle cx="0" cy="0" r="5" class="frame"></circle>
         <circle cx="0" cy="0" r="2" class="bob"></circle>

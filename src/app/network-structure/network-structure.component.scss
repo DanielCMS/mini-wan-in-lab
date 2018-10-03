@@ -47,6 +47,11 @@
   @extend %network-elements;
 }
 
+.tmp-line {
+  stroke: $blue;
+  stroke-width: 2px;
+}
+
 .connect-point {
   .frame {
     @include transition(all ease .2s);

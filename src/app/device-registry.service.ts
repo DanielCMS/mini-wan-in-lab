@@ -41,6 +41,10 @@ export class DeviceRegistry {
     this.deviceHashTable[id] = newHost;
   }
 
+  public addLink(src: Device, dst: Device): void {
+    let id = v1();
+  }
+
   public getDeviceById(id: string): Device {
     return this.deviceHashTable[id];
   }

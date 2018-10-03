@@ -161,9 +161,6 @@ export class CanvasComponent implements OnInit {
       this.deviceRegistry.addHost(normalized);
       this.canvasStatus = CanvasStatus.Idle;
     }
-
-    if (this.canvasStatus === CanvasStatus.AddingLink) {
-    }
   }
 
   // Transform screen pixel coordinates to un-offset version
