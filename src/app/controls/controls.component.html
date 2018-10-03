@@ -33,9 +33,13 @@
 
 <div
   class="topology-node-control-button delete"
+  [class.disabled]="!isAdding() && !elementSelected()"
   (click)="delete()"
 >
-  <img width="30px" height="30px" src="/assets/images/delete.svg">
+  <img
+    width="30px"
+    height="30px"
+    [src]="(isAdding() || elementSelected()) ? '/assets/images/delete.svg' : '/assets/images/delete-disabled.svg'">
   <div>
     {{isAdding() ? 'Cancel' : 'Delete'}}
   </div>

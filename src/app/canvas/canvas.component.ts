@@ -6,7 +6,7 @@ import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { CanvasStatus } from "../canvas-status";
 
-const CLICK_DELTA = 1;
+const CLICK_DELTA = 3;
 
 @Component({
   selector: 'app-canvas',

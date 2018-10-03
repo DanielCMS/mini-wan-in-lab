@@ -20,9 +20,14 @@ export class ControlsComponent implements OnInit {
   ngOnInit() {
   }
 
-  private isAdding():boolean {
+  private isAdding(): boolean {
     return [CanvasStatus.AddingRouter, CanvasStatus.AddingHost,
       CanvasStatus.AddingLink].includes(this.canvasStatus);
+  }
+
+  private elementSelected(): boolean {
+    return [CanvasStatus.RouterSelected, CanvasStatus.HostSelected,
+      CanvasStatus.LinkSelected].includes(this.canvasStatus);
   }
 
   private addRouter(): void {
