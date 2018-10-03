@@ -27,7 +27,8 @@
       [class.active]="activeDeviceId === router.id"
       (mouseenter)="deviceEntered(router.id)"
       (mouseleave)="deviceDetached(router.id, $event)"
-      (click)="deviceClicked(router.id, $event)"
+      (mousedown)="deviceMouseDown(router.id, $event)"
+      (mouseup)="deviceMouseUp(router.id, $event)"
     >
       <g transform="translate(0, -30)">
         <rect
@@ -68,7 +69,8 @@
       [class.active]="activeDeviceId === host.id"
       (mouseenter)="deviceEntered(host.id)"
       (mouseleave)="deviceDetached(host.id, $event)"
-      (click)="deviceClicked(host.id, $event)"
+      (mousedown)="deviceMouseDown(host.id, $event)"
+      (mouseup)="deviceMouseUp(host.id, $event)"
     >
       <g transform="translate(0, -30)">
         <rect

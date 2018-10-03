@@ -6,6 +6,7 @@ import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
 import { DeviceRegistry } from '../device-registry.service';
 
+const STATIC_CLICK_DELTA = 3;
 @Component({
   selector: 'app-network-structure',
   templateUrl: './network-structure.component.html',
@@ -23,8 +24,14 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
   private targetPosition: Vector;
   private CanvasStatus = CanvasStatus;
 
+  private mouseDownPosition: Vector;
+  private mouseDownId: string;
+  private _target: Device;
+
   private linkMoveStart$ = new Subject<void>();
   private linkMoveStop$ = new Subject<void>();
+  private followTargetStart$ = new Subject<void>();
+  private followTargetStop$ = new Subject<void>();
 
   constructor(private deviceRegistry: DeviceRegistry) {
   }
@@ -40,6 +47,16 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
       })
     ).subscribe((e: MouseEvent) => {
       this.updateTargetPosition(e);
+    });
+
+    this.followTargetStart$.pipe(
+      switchMap(() => {
+        return mouseMove$.pipe(
+          takeUntil(this.followTargetStop$)
+        );
+      })
+    ).subscribe(() => {
+      this.followTarget();
     });
   }
 
@@ -77,15 +94,19 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     }
   }
 
+  private followTarget(): void {
+    this.targetPosition = this._target.position;
+  }
+
   private deviceEntered(id: string): void {
     if (!this.tmpDevice || id === this.tmpDeviceId) {
       return;
     }
 
-    let target = this.deviceRegistry.getDeviceById(id);
-
-    this.targetPosition = target.position;
+    this._target = this.deviceRegistry.getDeviceById(id);
+    this.followTarget();
     this.linkMoveStop$.next();
+    this.followTargetStart$.next();
   }
 
   private deviceDetached(id: string, e: MouseEvent): void {
@@ -95,6 +116,31 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
 
     this.updateTargetPosition(e);
     this.linkMoveStart$.next();
+    this.followTargetStop$.next();
+  }
+
+  private deviceMouseDown(id: string, e: MouseEvent): void {
+    this.mouseDownPosition = {
+      x: e.pageX,
+      y: e.pageY
+    };
+    this.mouseDownId = id;
+  }
+
+  private deviceMouseUp(id: string, e: MouseEvent): void {
+    if (this.mouseDownId !== id) {
+      return;
+    }
+
+    if (Math.abs(e.pageX - this.mouseDownPosition.x) > STATIC_CLICK_DELTA) {
+      return;
+    }
+
+    if (Math.abs(e.pageY - this.mouseDownPosition.y) > STATIC_CLICK_DELTA) {
+      return;
+    }
+
+    this.deviceClicked(id, e);
   }
 
   private deviceClicked(id: string, e: MouseEvent): void {
