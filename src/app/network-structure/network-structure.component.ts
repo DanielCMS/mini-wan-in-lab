@@ -66,7 +66,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
   private connectPointClicked(id: string, e: MouseEvent): void {
     if (this.canvasStatus === CanvasStatus.AddingLink) {
       if (this.tmpDevice) {
-        this.deviceClicked(id);
+        this.deviceClicked(id, e);
       } else {
         this.tmpDevice = this.deviceRegistry.getDeviceById(id);
         this.tmpDeviceId = id;

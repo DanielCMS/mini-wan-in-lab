@@ -20,7 +20,9 @@
       <th width="30%">Port</th>
       <th width="70%">IP</th>
     </tr>
-    <tr>
+    <tr *ngFor="let interface of model.interfaces">
+      <td>{{interface.port}}</td>
+      <td>{{interface.ip}}</td>
     </tr>
   </table>
 
@@ -29,8 +31,6 @@
     <tr>
       <th width="30%">Neighbor</th>
       <th width="70%">Port</th>
-    </tr>
-    <tr>
     </tr>
   </table>
 

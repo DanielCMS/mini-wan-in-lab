@@ -12,10 +12,6 @@
   box-shadow: 0px 0px 2px 2px rgba(120,147,255,0.3);
   cursor: auto;
 
-  td {
-    background: transparent;
-  }
-
   .handle {
     font-family: Lato-Regular sans-serif;
     letter-spacing: 0.1em;
@@ -61,16 +57,22 @@
 
   table {
     border: $grey 1px solid;
+    border-collapse: collapse;
     line-height: 26px;
     width: 100%;
     padding-left: 10px;
     padding-right: 10px;
     font-size: 14px;
-    border-radius: 5px;
     margin-top: 5px;
 
-    th {
+    th, td {
       font-weight: normal;
+      background: transparent;
+      text-align: center;
+    }
+
+    tr:nth-child(2) {
+      border-top: $grey 1px solid;
     }
   }
 }

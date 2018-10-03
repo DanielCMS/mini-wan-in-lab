@@ -3,6 +3,8 @@ import { Vector } from './vector';
 export class Device {
   public interfaces: Interface[] = [];
 
+  private portCounter: number = 0;
+
   constructor(public id: string, public label: string, public position: Vector) {
   }
 
@@ -11,6 +13,11 @@ export class Device {
       x: this.position.x + delta.x,
       y: this.position.y + delta.y
     };
+  }
+
+  attachLink(link: Link, ip: string) {
+    this.portCounter++;
+    this.interfaces.push(new Interface(this.portCounter, ip, link));
   }
 }
 
@@ -48,7 +55,5 @@ export class Link {
 }
 
 export class Interface {
-  port: number;
-  srcId: string;
-  dstId: string;
+  constructor(public port: number, public ip: string, public link: Link) {}
 }
