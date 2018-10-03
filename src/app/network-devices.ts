@@ -15,9 +15,25 @@ export class Device {
 }
 
 export class Host extends Device {
+  constructor(public id: string, public label: string, public position: Vector) {
+    let offsetPosition = {
+      x: position.x - 12,
+      y: position.y + 25
+    };
+
+    super(id, label, offsetPosition);
+  }
 }
 
 export class Router extends Device {
+  constructor(public id: string, public label: string, public position: Vector) {
+    let offsetPosition = {
+      x: position.x - 22,
+      y: position.y + 25
+    };
+
+    super(id, label, offsetPosition);
+  }
 }
 
 export class Link {

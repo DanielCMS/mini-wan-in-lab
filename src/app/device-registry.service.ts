@@ -31,7 +31,7 @@ export class DeviceRegistry {
 
   public addHost(position: Vector): void {
     let id = v1();
-    let label = `Host ${this.routerLabelCounter}`;
+    let label = `Host ${this.hostLabelCounter}`;
     let newHost = new Host(id, label, position);
 
     this.hostLabelCounter++;
