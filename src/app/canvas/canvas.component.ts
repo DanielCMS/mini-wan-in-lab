@@ -51,7 +51,13 @@ export class CanvasComponent implements OnInit {
   }
 
   private requestDeleting(): void {
+    let active = this.deviceRegistry.getElementById(this.activeDeviceId);
+
+    this.panelRegistry.closePanelFor(active);
+    this.deviceRegistry.removeElementById(this.activeDeviceId);
+
     this.canvasStatus = CanvasStatus.Idle;
+    this.activeDeviceId = null;
   }
 
   private setupKeyboardEvents(): void {

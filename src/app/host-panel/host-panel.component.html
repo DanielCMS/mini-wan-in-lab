@@ -17,12 +17,17 @@
   <span class="title">Details</span>
   <table>
     <tr>
-      <td width="40%">IP:</td>
-      <td width="60%">{{model.interfaces.length > 0 ? model.interfaces[0].ip : "N/A"}}</td>
+      <td width="50%">IP</td>
+      <td width="50%">{{model.interfaces.length > 0 ? model.interfaces[0].ip : "N/A"}}</td>
     </tr>
     <tr>
-      <td>Gateway:</td>
+      <td>Gateway</td>
       <td>{{model.interfaces.length > 0 ? model.interfaces[0].link.getOtherEnd(model).label : "N/A"}}</td>
     </tr>
+    <tr>
+      <td>TCP Algorithm</td>
+      <td>Fast</td>
+    </tr>
   </table>
+  <span class="title">Flows</span>
 </div>

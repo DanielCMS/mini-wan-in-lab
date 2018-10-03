@@ -60,6 +60,18 @@ export class DeviceRegistry {
     if (this.isInterRouterLink(src, dst)) {
       ipPair = this.generateInterRouterIpPair();
     } else if (this.isAccessLink(src, dst)) {
+      if ((src instanceof Host) && (src.interfaces.length > 0)) {
+        console.log("A host cannot have two Gateways");
+
+        return;
+      }
+
+      if ((dst instanceof Host) && (dst.interfaces.length > 0)) {
+        console.log("A host cannot have two Gateways");
+
+        return;
+      }
+
       ipPair = this.generateAccessLinkIpPair();
     } else {
       console.log("Ignoring invalid link");
@@ -87,6 +99,34 @@ export class DeviceRegistry {
 
   public getElementById(id: string): Device | Link {
     return this.getDeviceById(id) || this.getLinkById(id);
+  }
+
+  public removeElementById(id: string): void {
+    let element = this.getElementById(id);
+
+    if (element instanceof Device) {
+      for (let intf of element.interfaces) {
+        this.removeElementById(intf.link.id);
+      }
+
+      if (element instanceof Host) {
+        let idx = this.hostList.indexOf(element);
+
+        this.hostList.splice(idx, 1);
+      } else if (element instanceof Router) {
+        let idx = this.routerList.indexOf(element);
+
+        this.routerList.splice(idx, 1);
+      }
+    } else if (element instanceof Link) {
+      let idx = this.linkList.indexOf(element);
+
+      this.linkList.splice(idx, 1);
+
+      for (let node of [element.src, element.dst]) {
+        node.detachLink(element);
+      }
+    }
   }
 
   private isDuplicateLink(src: Device, dst: Device): boolean {

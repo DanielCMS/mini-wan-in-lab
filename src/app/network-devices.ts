@@ -8,16 +8,20 @@ export class Device {
   constructor(public id: string, public label: string, public position: Vector) {
   }
 
-  panBy(delta: Vector) {
+  public panBy(delta: Vector): void {
     this.position = {
       x: this.position.x + delta.x,
       y: this.position.y + delta.y
     };
   }
 
-  attachLink(link: Link, ip: string) {
+  public attachLink(link: Link, ip: string): void {
     this.portCounter++;
     this.interfaces.push(new Interface(this.portCounter, ip, link));
+  }
+
+  public detachLink(link: Link): void {
+    this.interfaces = this.interfaces.filter(intf => intf.link !== link);
   }
 }
 
