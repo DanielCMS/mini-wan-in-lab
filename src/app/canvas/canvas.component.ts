@@ -156,6 +156,10 @@ export class CanvasComponent implements OnInit {
     let classList = target.classList;
 
     if (classList.contains("topology-elements")) {
+      if (this.canvasStatus === CanvasStatus.AddingLink) {
+        return;
+      }
+
       let element = this.deviceRegistry.getElementById(target.id);
 
       this.activeDeviceId = target.id;

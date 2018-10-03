@@ -4,46 +4,73 @@
   border: $dark-blue solid 2px;
   border-radius: 10px;
   position: absolute;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F5F7FF 100%);
+  background: $white;
   width: 230px;
   padding: 15px;
   padding-top: 0px;
   font-size: 14px;
   box-shadow: 0px 0px 2px 2px rgba(120,147,255,0.3);
+  cursor: auto;
 
   td {
-    background: $white;
+    background: transparent;
   }
 
   .handle {
-    font-family: Lato-Bold sans-serif;
+    font-family: Lato-Regular sans-serif;
     letter-spacing: 0.1em;
     text-transform: capitalize;
     cursor: grab;
     font-size: 16px;
-    font-weight: bold;
-    color: $white;
-    background: $dark-blue;
     display: flex;
     padding-top: 15px;
-    padding-bottom: 15px;
+    padding-bottom: 5px;
     padding-left: 15px;
     padding-right: 15px;
     margin-left: -15px;
     margin-right: -15px;
     border-radius: 5px 5px 0 0;
 
+    .cross {
+      position: absolute;
+      right: 15px;
+      color: $dark-grey;
+
+      &:hover {
+        cursor: pointer;
+        color: $red;
+      }
+    }
+
     img {
       margin-right: 10px;
-      -webkit-user-drag: none;
-      -khtml-user-drag: none;
-      -moz-user-drag: none;
-      -o-user-drag: none;
-      user-drag: none;
+      pointer-events: none;
     }
 
     &:active {
       cursor: grabbing;
+    }
+  }
+
+  .title {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    font-family: Lato-Regular;
+  }
+
+  table {
+    border: $grey 1px solid;
+    line-height: 26px;
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    margin-top: 5px;
+
+    th {
+      font-weight: normal;
     }
   }
 }

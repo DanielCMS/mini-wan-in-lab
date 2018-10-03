@@ -97,16 +97,23 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
     this.linkMoveStart$.next();
   }
 
-  private deviceClicked(id: string): void {
-    if (!this.tmpDevice || id === this.tmpDeviceId) {
+  private deviceClicked(id: string, e: MouseEvent): void {
+    if (this.canvasStatus !== CanvasStatus.AddingLink || id === this.tmpDeviceId) {
       return;
     }
 
-    let target = this.deviceRegistry.getDeviceById(id);
+    if (!this.tmpDevice) {
+      this.tmpDevice = this.deviceRegistry.getDeviceById(id);
+      this.tmpDeviceId = id;
+      this.updateTargetPosition(e);
+      this.linkMoveStart$.next();
+    } else {
+      let target = this.deviceRegistry.getDeviceById(id);
 
-    this.deviceRegistry.addLink(this.tmpDevice, target);
-    this.resetTmpDevice();
-    this.linkMoveStop$.next();
+      this.deviceRegistry.addLink(this.tmpDevice, target);
+      this.resetTmpDevice();
+      this.linkMoveStop$.next();
+    }
   }
 
   private resetTmpDevice(): void {

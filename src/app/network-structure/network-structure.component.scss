@@ -12,6 +12,7 @@
   text {
     @include user-select(none);
     pointer-events: none;
+    font-size: 14px;
   }
 
   &:active {

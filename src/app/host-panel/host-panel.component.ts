@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Host } from '../network-devices';
+import { Vector } from '../vector';
 
 @Component({
   selector: 'app-host-panel',
@@ -9,6 +10,7 @@ import { Host } from '../network-devices';
 export class HostPanelComponent implements OnInit {
 
   @Input() model: Host;
+  @Input() canvasOffset: Vector;
 
   constructor() { }
 

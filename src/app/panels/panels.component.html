@@ -2,16 +2,25 @@
   <app-router-panel
     *ngIf="element.isRouter"
     [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (click)="bringToTop(element)"
   >
   </app-router-panel>
   <app-host-panel
     *ngIf="element.isHost"
     [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (click)="bringToTop(element)"
   >
   </app-host-panel>
   <app-link-panel
     *ngIf="element.isLink"
     [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (click)="bringToTop(element)"
   >
   </app-link-panel>
 </div>

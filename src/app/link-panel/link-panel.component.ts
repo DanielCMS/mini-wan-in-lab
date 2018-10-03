@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Link } from '../network-devices';
+import { Vector } from '../vector';
 
 @Component({
   selector: 'app-link-panel',
@@ -9,6 +10,7 @@ import { Link } from '../network-devices';
 export class LinkPanelComponent implements OnInit {
 
   @Input() model: Link;
+  @Input() canvasOffset: Vector;
 
   constructor() { }
 

@@ -10,6 +10,10 @@ export class PanelRegistry {
 
   constructor() { }
 
+  bringToTop(element: Device | Link) {
+    this.openPanelFor(element);
+  }
+
   openPanelFor(element: Device | Link) {
     this.closePanelFor(element);
     this.panels.push(element);
