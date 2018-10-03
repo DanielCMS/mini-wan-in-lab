@@ -57,8 +57,8 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
 
   private updateTargetPosition(e: MouseEvent): void {
     this.targetPosition = {
-      x: e.pageX,
-      y: e.pageY
+      x: e.pageX - this.canvasOffset.x,
+      y: e.pageY - this.canvasOffset.y
     };
   }
 
@@ -70,10 +70,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
         this.tmpDevice = this.deviceRegistry.getDeviceById(id);
         this.tmpDeviceId = id;
 
-        this.targetPosition = {
-          x: e.pageX,
-          y: e.pageY
-        };
+        this.updateTargetPosition(e);
         this.linkMoveStart$.next();
       }
     }
@@ -95,10 +92,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges{
       return;
     }
 
-    this.targetPosition = {
-      x: e.pageX,
-      y: e.pageY
-    };
+    this.updateTargetPosition(e);
     this.linkMoveStart$.next();
   }
 

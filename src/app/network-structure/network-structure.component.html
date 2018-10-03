@@ -4,19 +4,19 @@
   >
     <line
       *ngFor="let link of deviceRegistry.linkList"
-      [attr.x1.px]="link.firstNodePos.x"
-      [attr.y1.px]="link.firstNodePos.y"
-      [attr.x2.px]="link.secondNodePos.x"
-      [attr.y2.px]="link.secondNodePos.y"
-      style="stroke:rgb(154,209,253);stroke-width:2"
+      [attr.x1.px]="link.src.position.x"
+      [attr.y1.px]="link.src.position.y"
+      [attr.x2.px]="link.dst.position.x"
+      [attr.y2.px]="link.dst.position.y"
+      class="line"
     />
 
     <line
       *ngIf="tmpDevice"
-      [attr.x1.px]="tmpDevice.position.x - canvasOffset.x"
-      [attr.y1.px]="tmpDevice.position.y - canvasOffset.y"
-      [attr.x2.px]="targetPosition.x - canvasOffset.x"
-      [attr.y2.px]="targetPosition.y - canvasOffset.y"
+      [attr.x1.px]="tmpDevice.position.x"
+      [attr.y1.px]="tmpDevice.position.y"
+      [attr.x2.px]="targetPosition.x"
+      [attr.y2.px]="targetPosition.y"
       class="tmp-line"
     />
 
