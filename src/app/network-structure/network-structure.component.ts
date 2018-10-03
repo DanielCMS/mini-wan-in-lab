@@ -1,7 +1,10 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
-import { Host, Router, Link, AddLinkStatus } from '../network-devices/network-devices';
+import { fromEvent, Subject } from 'rxjs';
+import { switchMap, takeUntil } from "rxjs/operators";
+import { Host, Router, Link } from '../network-devices';
 import { Vector } from '../vector';
 import { CanvasStatus } from '../canvas-status';
+import { DeviceRegistry } from '../device-registry.service';
 
 @Component({
   selector: 'app-network-structure',
@@ -10,94 +13,103 @@ import { CanvasStatus } from '../canvas-status';
 })
 export class NetworkStructureComponent implements OnInit, OnChanges{
 
-  @Input() isPlacingRouter: boolean;
-  @Input() isPlacingHost: boolean;
-  @Input() deviceLocation: Vector;
+  @Input() canvasOffset: Vector;
   @Input() canvasStatus: CanvasStatus;
-  @Output() finishAdding = new EventEmitter<void>();
 
-  private routerList: Router[] = [];
-  private hostList: Host[] = [];
-  private linkList: Link[] = [];
-  private routerIdCounter: number = 0;
-  private hostIdCounter: number = 0;
-  private linkIdCounter: number = 0;
-  private selectedRouter: Router;
-  private selectedHost: Host;
-  private addLinkStatus: AddLinkStatus = AddLinkStatus.Idle;
-  private linkTemp: Link;  
+  private linkTemp: Link;
+  private tmpDevice: Device;
+  private tmpDeviceId: string;
+  private targetPosition: Vector;
+  private CanvasStatus = CanvasStatus;
 
-  ngOnChanges(changes: SimpleChanges) {
-    if(this.isPlacingRouter) {
-      this.routerList.push({
-        id: this.routerIdCounter,
-        x: this.deviceLocation.x,
-        y: this.deviceLocation.y
-      });
-      this.routerIdCounter++;
-      this.finishAdding.emit();
-    } else if(this.isPlacingHost) {
-      this.hostList.push({
-        id: this.hostIdCounter,
-        x: this.deviceLocation.x,
-        y: this.deviceLocation.y
-      });
-      this.hostIdCounter++;
-      this.finishAdding.emit();
-    }
-    if(this.canvasStatus == CanvasStatus.AddingLink){
-      if(this.addLinkStatus == AddLinkStatus.Idle){
-        this.addLinkStatus = AddLinkStatus.Ready;
-      }
-    } else {
-      this.addLinkStatus = AddLinkStatus.Idle;
-    }
+  private linkMoveStart$ = new Subject<void>();
+  private linkMoveStop$ = new Subject<void>();
+
+  constructor(private deviceRegistry: DeviceRegistry) {
   }
-
-  onSelect(router: Router): void {
-    if(this.selectedRouter != router){
-      this.selectedRouter = router;
-      switch(this.addLinkStatus) {
-        case AddLinkStatus.Ready:
-          this.linkTemp = {
-            id: this.linkIdCounter,
-            firstNodePos: {
-              x: router.x + 18,
-              y: router.y + 18
-            },
-            secondNodePos: {
-              x: router.x + 18,
-              y: router.y + 18
-            }
-          };
-          this.addLinkStatus = AddLinkStatus.FisrtNodeSelected;
-          break;
-        case AddLinkStatus.FisrtNodeSelected:
-          this.linkTemp.secondNodePos = {
-            x: router.x + 18,
-            y: router.y + 18
-          };
-          this.linkList.push(this.linkTemp);
-          this.addLinkStatus = AddLinkStatus.Idle;
-          this.finishAdding.emit();
-          break;
-        case AddLinkStatus.SecondNodeSelected:
-          break;
-        default:
-          break;
-      }
-    } else {
-      this.selectedRouter = {
-        id: -1,
-        x: 0,
-        y: 0
-      };
-    }
-  }
-
-  constructor() { }
 
   ngOnInit() {
+    let mouseMove$ = fromEvent(document, "mousemove");
+
+    this.linkMoveStart$.pipe(
+      switchMap(() => {
+        return mouseMove$.pipe(
+          takeUntil(this.linkMoveStop$)
+        );
+      })
+    ).subscribe((e: MouseEvent) => {
+      this.updateTargetPosition(e);
+    });
   }
 
+  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+    // Reset tmp device during link adding if canvas status changed
+    for (let propName in changes) {
+      if (propName === "canvasStatus") {
+        let currentStatus = changes[propName].currentValue;
+
+        if (currentStatus !== CanvasStatus.AddingLink) {
+          this.resetTmpDevice();
+        }
+      }
+    }
+  }
+
+  private updateTargetPosition(e: MouseEvent): void {
+    this.targetPosition = {
+      x: e.pageX - this.canvasOffset.x,
+      y: e.pageY - this.canvasOffset.y
+    };
+  }
+
+  private connectPointClicked(id: string, e: MouseEvent): void {
+    if (this.canvasStatus === CanvasStatus.AddingLink) {
+      if (this.tmpDevice) {
+        this.deviceClicked(id);
+      } else {
+        this.tmpDevice = this.deviceRegistry.getDeviceById(id);
+        this.tmpDeviceId = id;
+
+        this.updateTargetPosition(e);
+        this.linkMoveStart$.next();
+      }
+    }
+  }
+
+  private deviceEntered(id: string): void {
+    if (!this.tmpDevice || id === this.tmpDeviceId) {
+      return;
+    }
+
+    let target = this.deviceRegistry.getDeviceById(id);
+
+    this.targetPosition = target.position;
+    this.linkMoveStop$.next();
+  }
+
+  private deviceDetached(id: string, e: MouseEvent): void {
+    if (!this.tmpDevice || id === this.tmpDeviceId) {
+      return;
+    }
+
+    this.updateTargetPosition(e);
+    this.linkMoveStart$.next();
+  }
+
+  private deviceClicked(id: string): void {
+    if (!this.tmpDevice || id === this.tmpDeviceId) {
+      return;
+    }
+
+    let target = this.deviceRegistry.getDeviceById(id);
+
+    this.deviceRegistry.addLink(this.tmpDevice, target);
+    this.resetTmpDevice();
+    this.linkMoveStop$.next();
+  }
+
+  private resetTmpDevice(): void {
+    this.tmpDevice = null;
+    this.tmpDeviceId = null;
+  }
 }

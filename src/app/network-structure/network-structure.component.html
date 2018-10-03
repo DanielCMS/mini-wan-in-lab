@@ -1,36 +1,107 @@
-<svg width="100%" height="100%" class = "svg-bg">
-  <line
-    *ngFor="let link of linkList"
-    [attr.x1.px]="link.firstNodePos.x"
-    [attr.y1.px]="link.firstNodePos.y"
-    [attr.x2.px]="link.secondNodePos.x"
-    [attr.y2.px]="link.secondNodePos.y"
-    style="stroke:rgb(154,209,253);stroke-width:2"
-  />
-</svg>
-
-<div *ngFor="let router of routerList">
-  <div
-    [ngStyle]="{'position': 'absolute', 'left': router.x+'px', 'top': router.y+'px'}"
-    draggable
-    class="router"
-    [class.selected]="router === selectedRouter"
-    (click)="onSelect(router)"
-    >
-    <div><img width="36" height="36" src="/assets/images/router.svg" alt=""></div>
-    Router {{router.id}}
-  </div>
-</div>
-
-<div *ngFor="let host of hostList">
-  <div
-    class="host"
-    [ngStyle]="{'position': 'absolute', 'left': host.x+'px', 'top': host.y+'px'}"
-    draggable
+<svg width="100%" height="100%" class="svg-bg">
+  <g
+    [style.transform]="'translate(' + canvasOffset.x + 'px, ' + canvasOffset.y + 'px)'"
   >
-    <div>
-      <img width="36" height="36" src="/assets/images/host.svg" alt="">
-    </div>
-    Host {{host.id}}
-  </div>
-</div>
+    <line
+      *ngFor="let link of deviceRegistry.linkList"
+      [attr.x1.px]="link.src.position.x"
+      [attr.y1.px]="link.src.position.y"
+      [attr.x2.px]="link.dst.position.x"
+      [attr.y2.px]="link.dst.position.y"
+      class="line"
+    />
+
+    <line
+      *ngIf="tmpDevice"
+      [attr.x1.px]="tmpDevice.position.x"
+      [attr.y1.px]="tmpDevice.position.y"
+      [attr.x2.px]="targetPosition.x"
+      [attr.y2.px]="targetPosition.y"
+      class="tmp-line"
+    />
+
+    <g
+      *ngFor="let router of deviceRegistry.routerList"
+      [style.transform]="'translate(' + router.position.x + 'px, ' + router.position.y + 'px)'"
+      class="router"
+      (mouseenter)="deviceEntered(router.id)"
+      (mouseleave)="deviceDetached(router.id, $event)"
+      (click)="deviceClicked(router.id)"
+    >
+      <g transform="translate(0, -30)">
+        <rect
+          height="60px"
+          width="80px"
+          rx="5px"
+          ry="5px"
+          class="topology-elements"
+          [id]="router.id"
+        >
+        </rect>
+        <image
+          x="22px"
+          y="5px"
+          width="36px"
+          height="36px"
+          xlink:href="/assets/images/router.svg"
+        />
+        <text x="40px" y="55px" text-anchor="middle">
+          {{router.label}}
+        </text>
+      </g>
+      <g
+        class="connect-point"
+        [class.editable]="canvasStatus === CanvasStatus.AddingLink"
+        [class.is-active]="tmpDeviceId === router.id"
+        (click)="connectPointClicked(router.id, $event)"
+      >
+        <circle cx="0" cy="0" r="5" class="frame"></circle>
+        <circle cx="0" cy="0" r="2" class="bob"></circle>
+      </g>
+    </g>
+
+    <g
+      *ngFor="let host of deviceRegistry.hostList"
+      [style.transform]="'translate(' + host.position.x + 'px, ' + host.position.y + 'px)'"
+      class="host topology-elements"
+      (mouseenter)="deviceEntered(host.id)"
+      (mouseleave)="deviceDetached(host.id, $event)"
+      (click)="deviceClicked(host.id)"
+    >
+      <g transform="translate(0, -30)">
+        <rect
+          height="60px"
+          width="60px"
+          rx="5px"
+          ry="5px"
+          class="topology-elements"
+          [id]="host.id"
+        >
+        </rect>
+        <image
+          x="12px"
+          y="5px"
+          width="36px"
+          height="36px"
+          xlink:href="/assets/images/host.svg"
+        />
+        <text
+          x="30px"
+          y="55px"
+          text-anchor="middle"
+        >
+          {{host.label}}
+        </text>
+      </g>
+      <g
+        class="connect-point"
+        [class.editable]="canvasStatus === CanvasStatus.AddingLink"
+        [class.is-active]="tmpDeviceId === host.id"
+        (click)="connectPointClicked(host.id, $event)"
+      >
+        <circle cx="0" cy="0" r="5" class="frame"></circle>
+        <circle cx="0" cy="0" r="2" class="bob"></circle>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -5,10 +5,6 @@
   [class.adding-host]="canvasStatus === CanvasStatus.AddingHost"
   [style.background-position-x.px]="offset.x"
   [style.background-position-y.px]="offset.y"
-  (mousedown)="mouseDown($event)"
-  (mousemove)="mouseMove($event)"
-  (mouseup)="mouseUp()"
-  (click) = "placeDevice($event)"
 >
   <app-controls
     [canvasStatus]="canvasStatus"
@@ -19,14 +15,8 @@
   >
   </app-controls>
   <app-network-structure 
-    [isPlacingRouter] = "isPlacingRouter"
-    [isPlacingHost] = "isPlacingHost"
-    [deviceLocation] = "devicePlacement"
+    [canvasOffset]="offset"
     [canvasStatus]="canvasStatus"
-    (finishAdding) = "finishAddingDevice()"
   >    
   </app-network-structure>
-
-  <app-router-panel></app-router-panel>
-
 </div>

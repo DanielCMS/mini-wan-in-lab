@@ -1,7 +1,6 @@
 import { AfterViewInit, Directive, ElementRef, Input, NgZone, OnDestroy } from '@angular/core';
-import { fromEvent } from "rxjs";
+import { fromEvent, Subject } from "rxjs";
 import { filter, switchMap, takeUntil, map } from "rxjs/operators";
-import { Subject } from "rxjs";
 import { Vector } from "./vector";
 
 @Directive({
