@@ -29,8 +29,12 @@
   <span class="title">Neighbor Table</span>
   <table>
     <tr>
-      <th width="30%">Neighbor</th>
-      <th width="70%">Port</th>
+      <th width="70%">Neighbor</th>
+      <th width="30%">Port</th>
+    </tr>
+    <tr *ngFor="let interface of model.interfaces">
+      <td>{{interface.link.getOtherEnd(model).label}}</td>
+      <td>{{interface.port}}</td>
     </tr>
   </table>
 

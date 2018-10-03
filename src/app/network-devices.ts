@@ -52,6 +52,14 @@ export class Link {
 
   constructor(public id: string, public src: Device, public dst: Device) {
   }
+
+  public getOtherEnd(element: Device): Device {
+    if (element === this.src) {
+      return this.dst;
+    } else {
+      return this.src;
+    }
+  }
 }
 
 export class Interface {
