@@ -11,6 +11,15 @@ export class PanelRegistry {
   constructor() { }
 
   openPanelFor(element: Device | Link) {
+    this.closePanelFor(element);
     this.panels.push(element);
+  }
+
+  closePanelFor(element: Device | Link) {
+    let index = this.panels.indexOf(element);
+
+    if (index >= 0) {
+      this.panels.splice(index, 1);
+    }
   }
 }
