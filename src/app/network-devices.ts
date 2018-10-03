@@ -15,6 +15,8 @@ export class Device {
 }
 
 export class Host extends Device {
+  public isHost: boolean = true;
+
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
 
@@ -26,6 +28,8 @@ export class Host extends Device {
 }
 
 export class Router extends Device {
+  public isRouter: boolean = true;
+
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
 
@@ -37,6 +41,8 @@ export class Router extends Device {
 }
 
 export class Link {
+  public isLink: boolean = true;
+
   constructor(public id: string, public src: Device, public dst: Device) {
   }
 }

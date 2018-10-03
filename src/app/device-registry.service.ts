@@ -55,4 +55,8 @@ export class DeviceRegistry {
   public getLinkById(id: string): Link {
     return this.linkHashTable[id];
   }
+
+  public getElementById(id: string): Device | Link {
+    return this.getDeviceById(id) || this.getLinkById(id);
+  }
 }

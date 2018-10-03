@@ -156,7 +156,10 @@ export class CanvasComponent implements OnInit {
     let classList = target.classList;
 
     if (classList.contains("topology-elements")) {
+      let element = this.deviceRegistry.getElementById(target.id);
+
       this.activeDeviceId = target.id;
+      this.panelRegistry.openPanelFor(element);
     } else if (classList.contains("svg-bg")) {
       let pageLocation = { x: e.pageX, y: e.pageY };
       let normalized = this.normalizePoint(pageLocation);

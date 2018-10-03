@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { Host } from '../network-devices';
 
 @Component({
   selector: 'app-host-panel',
@@ -6,6 +7,8 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./host-panel.component.css']
 })
 export class HostPanelComponent implements OnInit {
+
+  @Input() model: Host;
 
   constructor() { }
 

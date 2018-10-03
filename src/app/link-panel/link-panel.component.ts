@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { Link } from '../network-devices';
 
 @Component({
   selector: 'app-link-panel',
@@ -6,6 +7,8 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./link-panel.component.css']
 })
 export class LinkPanelComponent implements OnInit {
+
+  @Input() model: Link;
 
   constructor() { }
 
