@@ -118,6 +118,9 @@ export class Router extends Device {
         this.lsdb.splice(idx, 1);
         setTimeout(() => this.updateRoutingTable());
       }
+    } else if (packet.type === PacketType.LSA) {
+      this.mergeLsdb(<Link[]>packet.payload);
+      setTimeout(() => this.updateRoutingTable());
     }
 
     packet.ttl = packet.ttl - 1;
@@ -168,6 +171,7 @@ export class Router extends Device {
 
     if (otherEnd instanceof Router) {
       this.learnLsdb(otherEnd);
+      this.advertiseLsdb(link);
     }
 
     setTimeout(() => {
@@ -192,7 +196,11 @@ export class Router extends Device {
   }
 
   public learnLsdb(fromRouter: Router): void {
-    let uniqued = new Set([...this.lsdb, ...fromRouter.lsdb]);
+    this.mergeLsdb(fromRouter.lsdb);
+  }
+
+  public mergeLsdb(lsdb: Link[]): void {
+    let uniqued = new Set([...this.lsdb, ...lsdb]);
     let merged: Link[] = [];
 
     uniqued.forEach(link => merged.push(link));
@@ -212,6 +220,20 @@ export class Router extends Device {
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
+  }
+
+  public advertiseLsdb(link: Link): void {
+    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+      OSPF_SIZE, this.lsdb);
+
+    this.broadcast(packet, [link]);
+  }
+
+  public advertiseLsa(link: Link): void {
+    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+      OSPF_SIZE, []);
+
+    this.broadcast(packet, []);
   }
 
   public updateRoutingTable(): void {
@@ -327,6 +349,9 @@ export class Link {
   private dstSentPktCounter: number = 0;
   private dstThroughputCounter: number = 0;
 
+  private srcTransTimer: number;
+  private dstTransTimer: number;
+
   constructor(public id: string, public src: Device, public dst: Device) {
   }
 
@@ -405,7 +430,7 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
-    setTimeout(() => {
+    this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
       this.srcLatencyData.push(packet.getTransTime());
       this.srcThroughputCounter = this.srcThroughputCounter + packet.size;
@@ -443,7 +468,7 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
-    setTimeout(() => {
+    this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
       this.dstLatencyData.push(packet.getTransTime());
       this.dstThroughputCounter = this.dstThroughputCounter + packet.size;
@@ -454,6 +479,22 @@ export class Link {
 
       this.sendFromDstBuffer();
     }, Math.floor(sendingTime * TIME_SLOWDOWN));
+  }
+
+  public cleanUp(): void {
+    // Stop ongoing transmission
+    clearTimeout(this.srcTransTimer);
+    clearTimeout(this.dstTransTimer);
+  }
+
+  public updateMetric(metric: number): void {
+    this.metric = metric;
+
+    for (let node of [this.src, this.dst]) {
+      if (node instanceof Router) {
+        node.advertiseLsa(this);
+      }
+    }
   }
 }
 
@@ -469,7 +510,8 @@ export enum PacketType {
   Payload,
   Ack,
   LinkUp,
-  LinkDown
+  LinkDown,
+  LSA
 }
 
 const INIT_TTL = 64;

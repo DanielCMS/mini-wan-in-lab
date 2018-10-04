@@ -127,6 +127,7 @@ export class DeviceRegistry {
       let idx = this.linkList.indexOf(element);
 
       this.linkList.splice(idx, 1);
+      element.cleanUp();
 
       for (let node of [element.src, element.dst]) {
         node.detachLink(element);
