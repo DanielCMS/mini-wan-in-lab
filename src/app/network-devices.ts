@@ -1,5 +1,5 @@
 import { Vector } from './vector';
-import jsgraphs from 'js-graph-algorithms');
+import * as jsgraphs from 'js-graph-algorithms';
 
 export class Device {
   public interfaces: Interface[] = [];
