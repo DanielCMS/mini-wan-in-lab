@@ -44,10 +44,31 @@ export class Host extends Device {
   }
 
   public getIp(): string {
-    return this.interfaces[0].ip;
+    let gateway = this.interfaces[0];
+
+    if (gateway) {
+      return gateway.ip;
+    } else {
+      return 'N/A';
+    }
   }
 
   public receivePacket(packet: Packet, link: Link): void {
+    if (packet.dstIp !== this.getIp()) {
+      return;
+    }
+
+    // Send ack packet here
+  }
+
+  public sendPacket(packet: Packet): void {
+    let gateway = this.interfaces[0];
+
+    if (gateway) {
+      gateway.link.sendPacketFrom(this, packet);
+    } else {
+      console.log(`Dropping packet at ${this.label} due to missing gateway.`);
+    }
   }
 }
 
@@ -57,7 +78,7 @@ export class Router extends Device {
   public isRouter: boolean = true;
   private lsdb: Link[] = [];
   private routingTable: Route[] = [];
-  private fib: { [nextHopId: string]: Link } = {};
+  private fib: { [ip: string]: Link } = {};
 
   private cachedBroadcastPkt: Packet[] = [];
 
@@ -71,6 +92,13 @@ export class Router extends Device {
   }
 
   public forwardPacket(packet: Packet): void {
+    let link = this.fib[packet.dstIp];
+
+    if (link) {
+      link.sendPacketFrom(this, packet);
+    } else {
+      console.log(`Dropping packet at ${this.label} due to unreachable network`);
+    }
   }
 
   public receivePacket(packet: Packet, link: Link): void {
@@ -223,9 +251,29 @@ export class Router extends Device {
     }
 
     this.routingTable = routingTable;
+
+    this.updateFib();
   }
 
   private updateFib(): void {
+    let hopLinkMap: { [hopId: string]: Link } = {};
+    let fib: { [ip: string]: Link } = {};
+
+    for (let intf of this.interfaces) {
+      let link = intf.link;
+
+      hopLinkMap[link.getOtherEnd(this).id] = link;
+    }
+
+    for (let route of this.routingTable) {
+      let link = hopLinkMap[route.nextHop.id];
+
+      if (link) {
+        fib[route.ip] = link;
+      }
+    }
+
+    this.fib = fib;
   }
 }
 
