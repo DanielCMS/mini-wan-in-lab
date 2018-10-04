@@ -43,7 +43,12 @@
     <tr>
       <th width="30%">Source</th>
       <th width="30%">Target</th>
-      <th width="40%">Cost</th>
+      <th width="40%">Metric</th>
+    </tr>
+    <tr *ngFor="let link of model.lsdb">
+      <td>{{link.src.label}}</td>
+      <td>{{link.dst.label}}</td>
+      <td>{{link.metric}}</td>
     </tr>
   </table>
 

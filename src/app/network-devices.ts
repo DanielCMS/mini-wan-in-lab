@@ -40,6 +40,7 @@ export class Host extends Device {
 
 export class Router extends Device {
   public isRouter: boolean = true;
+  private lsdb: Link[] = [];
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -49,12 +50,33 @@ export class Router extends Device {
       y: this.position.y + 25
     };
   }
+
+  public attachLink(link: Link, ip: string): void {
+    super.attachLink(link, ip);
+
+    if (this.lsdb.indexOf(link) < 0) {
+      this.lsdb.push(link);
+    }
+
+    this.advertiseNewLink(link);
+    this.updateRoutingTable();
+  }
+
+  public advertiseNewLink(link: Link): void {
+  }
+
+  public advertiseLinkRemoval(link: Link): void {
+  }
+
+  public updateRoutingTable(): void {
+  }
 }
 
 const DEFAULT_CAP = 10;
 const DEFAULT_DELAY = 10;
 const DEFAULT_LOSS_RATE = 0.1;
 const DEFAULT_BUFFER_SIZE = 64;
+const DEFAULT_METRIC = 1;
 
 export class Link {
   public isLink: boolean = true;
@@ -62,6 +84,7 @@ export class Link {
   public delay: number = DEFAULT_DELAY;
   public lossRate: number = DEFAULT_LOSS_RATE;
   public bufferSize: number = DEFAULT_BUFFER_SIZE;
+  public metric: number = DEFAULT_METRIC;
 
   constructor(public id: string, public src: Device, public dst: Device) {
   }
