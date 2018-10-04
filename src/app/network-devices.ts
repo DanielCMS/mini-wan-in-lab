@@ -1,5 +1,8 @@
+import { Subject } from 'rxjs';
 import { Vector } from './vector';
 import * as jsgraphs from 'js-graph-algorithms';
+import * as Deque from 'double-ended-queue';
+import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE } from './constants';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -24,6 +27,8 @@ export class Device {
   public detachLink(link: Link): void {
     this.interfaces = this.interfaces.filter(intf => intf.link !== link);
   }
+
+  public receivePacket(packet: Packet, link: Link): void {}
 }
 
 export class Host extends Device {
@@ -41,12 +46,20 @@ export class Host extends Device {
   public getIp(): string {
     return this.interfaces[0].ip;
   }
+
+  public receivePacket(packet: Packet, link: Link): void {
+  }
 }
+
+const BROADCAST_CACHE_INTERVAL = 60000; // 1min
 
 export class Router extends Device {
   public isRouter: boolean = true;
   private lsdb: Link[] = [];
   private routingTable: Route[] = [];
+  private fib: { [nextHopId: string]: Link } = {};
+
+  private cachedBroadcastPkt: Packet[] = [];
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -55,6 +68,63 @@ export class Router extends Device {
       x: this.position.x - 22,
       y: this.position.y + 25
     };
+  }
+
+  public forwardPacket(packet: Packet): void {
+  }
+
+  public receivePacket(packet: Packet, link: Link): void {
+    if (packet.type === PacketType.LinkUp) {
+      let link = <Link>packet.payload;
+
+      if (this.lsdb.indexOf(link) < 0) {
+        this.lsdb.push(link);
+
+        setTimeout(() => this.updateRoutingTable());
+      }
+    } else if (packet.type === PacketType.LinkDown) {
+      let link = <Link>packet.payload;
+      let idx = this.lsdb.indexOf(link);
+
+      if (idx > 0) {
+        this.lsdb.splice(idx, 1);
+        setTimeout(() => this.updateRoutingTable());
+      }
+    }
+
+    packet.ttl = packet.ttl - 1;
+
+    if (packet.ttl <= 0) {
+      return;
+    }
+
+    if (packet.dstIp === BROADCAST_IP) {
+      this.broadcast(packet, [link]);
+    } else {
+      this.forwardPacket(packet);
+    }
+  }
+
+  public broadcast(packet: Packet, exclude: Link[]) {
+    if (this.cachedBroadcastPkt.indexOf(packet) >= 0) {
+      // This packet is already broadcast, a loop is detected
+
+      return;
+    }
+
+    this.cachedBroadcastPkt.push(packet);
+
+    setTimeout(() => {
+      this.cachedBroadcastPkt.filter(_pkt => _pkt !== packet);
+    }, BROADCAST_CACHE_INTERVAL);
+
+    for (let intf of this.interfaces) {
+      if (exclude.indexOf(intf.link) > 0) {
+        continue;
+      }
+
+      intf.link.sendPacketFrom(this, packet);
+    }
   }
 
   public attachLink(link: Link, ip: string): void {
@@ -66,13 +136,13 @@ export class Router extends Device {
 
     this.advertiseNewLink(link);
 
+    let otherEnd = link.getOtherEnd(this);
+
+    if (otherEnd instanceof Router) {
+      this.learnLsdb(otherEnd);
+    }
+
     setTimeout(() => {
-      let otherEnd = link.getOtherEnd(this);
-
-      if (otherEnd instanceof Router) {
-        this.learnLsdb(otherEnd);
-      }
-
       this.updateRoutingTable();
     });
   }
@@ -87,9 +157,17 @@ export class Router extends Device {
   }
 
   public advertiseNewLink(link: Link): void {
+    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
+      0, OSPF_SIZE, link);
+
+    this.broadcast(packet, [link]);
   }
 
   public advertiseLinkRemoval(link: Link): void {
+    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
+      0, OSPF_SIZE, link);
+
+    this.broadcast(packet, [link]);
   }
 
   public updateRoutingTable(): void {
@@ -146,6 +224,9 @@ export class Router extends Device {
 
     this.routingTable = routingTable;
   }
+
+  private updateFib(): void {
+  }
 }
 
 const DEFAULT_CAP = 10;
@@ -153,6 +234,8 @@ const DEFAULT_DELAY = 10;
 const DEFAULT_LOSS_RATE = 0.1;
 const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 1;
+const BYTES_IN_KB = 1024;
+const BYTES_PER_MBPS = 1024 * 1024 / 8;
 
 export class Link {
   public isLink: boolean = true;
@@ -161,6 +244,24 @@ export class Link {
   public lossRate: number = DEFAULT_LOSS_RATE;
   public bufferSize: number = DEFAULT_BUFFER_SIZE;
   public metric: number = DEFAULT_METRIC;
+
+  private srcBuffer = new Deque();
+  private dstBuffer = new Deque();
+  private srcBufferUsed: number = 0;
+  private dstBufferUsed: number = 0;
+
+  private srcSending: boolean = false;
+  private dstSending: boolean = false;
+
+  private srcLatencyData: number[] = [];
+  private srcLostPktCounter: number = 0;
+  private srcSentPktCounter: number = 0;
+  private srcThroughputCounter: number = 0;
+
+  private dstLatencyData: number[] = [];
+  private dstLostPktCounter: number = 0;
+  private dstSentPktCounter: number = 0;
+  private dstThroughputCounter: number = 0;
 
   constructor(public id: string, public src: Device, public dst: Device) {
   }
@@ -180,6 +281,116 @@ export class Link {
       return this.dst;
     }
   }
+
+  public sendPacketFrom(source: Device, packet: Packet): void {
+    if (source === this.src) {
+      let newSrcBufferSize = this.srcBufferUsed + packet.size;
+
+      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
+        return;
+      }
+
+      this.srcBuffer.push(packet);
+      this.srcBufferUsed = newSrcBufferSize;
+
+      if (!this.srcSending) {
+        this.sendFromSrcBuffer();
+      }
+    } else {
+      let newDstBufferSize = this.dstBufferUsed + packet.size;
+
+      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
+        return;
+      }
+
+      this.dstBuffer.push(packet);
+      this.dstBufferUsed = newDstBufferSize;
+
+      if (!this.dstSending) {
+        this.sendFromDstBuffer();
+      }
+    }
+  }
+
+  private sendFromSrcBuffer(): void {
+    this.srcSending = true;
+
+    if (this.srcBuffer.isEmpty()) {
+      this.srcSending = false;
+
+      return;
+    }
+
+    let packet = <Packet>this.srcBuffer.shift();
+
+    this.srcBufferUsed = this.srcBufferUsed - packet.size;
+    this.srcSentPktCounter++;
+
+    packet.markSent();
+
+    if (Math.random() * 100 < this.lossRate) {
+      this.srcLostPktCounter++;
+      console.log(`Packet lost at ${this.id}`);
+
+      return;
+    }
+
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+
+    setTimeout(() => {
+      packet.markReceived();
+      this.srcLatencyData.push(packet.getTransTime());
+      this.srcThroughputCounter = this.srcThroughputCounter + packet.size;
+
+      setTimeout(() => {
+        this.dst.receivePacket(packet, this);
+      });
+
+      this.sendFromSrcBuffer();
+    }, sendingTime * TIME_SLOWDOWN);
+  }
+
+  private sendFromDstBuffer(): void {
+    this.dstSending = true;
+
+    if (this.dstBuffer.isEmpty()) {
+      this.dstSending = false;
+
+      return;
+    }
+
+    let packet = <Packet>this.dstBuffer.shift();
+
+    this.dstBufferUsed = this.dstBufferUsed - packet.size;
+    this.dstSentPktCounter++;
+
+    packet.markSent();
+
+    if (Math.random() * 100 < this.lossRate) {
+      this.dstLostPktCounter++;
+      console.log(`Packet lost at ${this.id}`);
+
+      return;
+    }
+
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+
+    setTimeout(() => {
+      packet.markReceived();
+      this.dstLatencyData.push(packet.getTransTime());
+      this.dstThroughputCounter = this.dstThroughputCounter + packet.size;
+
+      setTimeout(() => {
+        this.src.receivePacket(packet, this);
+      });
+
+      this.sendFromDstBuffer();
+    }, sendingTime * TIME_SLOWDOWN);
+  }
 }
 
 export class Interface {
@@ -188,4 +399,35 @@ export class Interface {
 
 export class Route {
   constructor(public ip: string, public nextHop: Device) {}
+}
+
+export enum PacketType {
+  Payload,
+  Ack,
+  LinkUp,
+  LinkDown
+}
+
+const INIT_TTL = 64;
+
+export class Packet {
+  public ttl: number = INIT_TTL;
+  private sentTime: number;
+  private receivedTime: number;
+
+  constructor(public srcIp: string, public dstIp: string, public type: PacketType,
+    public sequenceNumber: number, public size: number, public payload?: any) {
+  }
+
+  public markSent(): void {
+    this.sentTime = Date.now();
+  }
+
+  public markReceived(): void {
+    this.receivedTime = Date.now();
+  }
+
+  public getTransTime(): number {
+    return this.receivedTime - this.sentTime;
+  }
 }
