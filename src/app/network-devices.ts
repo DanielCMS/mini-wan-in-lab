@@ -54,12 +54,14 @@ export class Router extends Device {
 const DEFAULT_CAP = 10;
 const DEFAULT_DELAY = 10;
 const DEFAULT_LOSS_RATE = 0.1;
+const DEFAULT_BUFFER_SIZE = 64;
 
 export class Link {
   public isLink: boolean = true;
   public capacity: number = DEFAULT_CAP;
   public delay: number = DEFAULT_DELAY;
   public lossRate: number = DEFAULT_LOSS_RATE;
+  public bufferSize: number = DEFAULT_BUFFER_SIZE;
 
   constructor(public id: string, public src: Device, public dst: Device) {
   }

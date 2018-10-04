@@ -3,7 +3,6 @@ import { Host } from '../network-devices';
 import { Vector } from '../vector';
 
 const X_OFFSET = 100;
-const TCP_ALGS = ["Reno", "Vegas", "FAST"];
 
 @Component({
   selector: 'app-host-panel',
@@ -17,7 +16,6 @@ export class HostPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   private anchor: Vector;
-  private tcpAlgs: string[] = TCP_ALGS;
 
   constructor() { }
 

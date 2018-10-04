@@ -1,0 +1,7 @@
+<input
+  #input
+  [value]="value"
+  (keyup.enter)="input.value=process(input.value)"
+  (blur)="input.value=process(input.value)"
+  (keyup.escape)="input.value=value"
+/>

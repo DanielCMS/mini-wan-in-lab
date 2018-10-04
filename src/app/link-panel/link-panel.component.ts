@@ -16,6 +16,7 @@ export class LinkPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   private anchor: Vector;
+  private window = window;
 
   constructor() { }
 
@@ -28,6 +29,26 @@ export class LinkPanelComponent implements OnInit {
 
   private closePanel(): void {
     this.close.emit();
+  }
+
+  private processToPosInt(input: string, fallback: string): string {
+    let normalized = parseInt(input);
+
+    if (!isNaN(normalized) && normalized > 0) {
+      return normalized.toString();
+    } else {
+      return fallback;
+    }
+  }
+
+  private processToPercent(input: string, fallback: string): string {
+    let normalized = parseFloat(input);
+
+    if (isNaN(normalized)) {
+      return fallback;
+    } else {
+      return Math.max(Math.min(normalized, 100), 0).toString();
+    }
   }
 
 }

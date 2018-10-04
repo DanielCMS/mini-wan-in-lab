@@ -58,7 +58,7 @@ export class CanvasComponent implements OnInit {
 
   private setupKeyboardEvents(): void {
     fromEvent(document, 'keydown').subscribe((e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && document.activeElement === document.body) {
         this.canvasStatus = CanvasStatus.Idle;
         this.activeDeviceId = null;
       }
