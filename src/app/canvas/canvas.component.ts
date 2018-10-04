@@ -51,7 +51,9 @@ export class CanvasComponent implements OnInit {
   }
 
   private requestDeleting(): void {
-    this.deviceRegistry.removeElementById(this.activeDeviceId);
+    if(this.canvasStatus == CanvasStatus.Idle){
+      this.deviceRegistry.removeElementById(this.activeDeviceId);
+    }
     this.canvasStatus = CanvasStatus.Idle;
     this.activeDeviceId = null;
   }
