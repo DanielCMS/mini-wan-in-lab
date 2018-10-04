@@ -15,52 +15,76 @@
   <hr>
 
   <span class="title">Interfaces</span>
-  <table>
-    <tr>
-      <th width="50%">Port</th>
-      <th width="50%">IP</th>
-    </tr>
-    <tr *ngFor="let interface of model.interfaces">
-      <td>{{interface.port}}</td>
-      <td>{{interface.ip}}</td>
-    </tr>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th width="50%">Port</th>
+          <th width="50%">IP</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="model.interfaces.length > 0">
+        <tr *ngFor="let interface of model.interfaces">
+          <td>{{interface.port}}</td>
+          <td>{{interface.ip}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <span class="title">Neighbor Table</span>
-  <table>
-    <tr>
-      <th width="50%">Neighbor</th>
-      <th width="50%">Port</th>
-    </tr>
-    <tr *ngFor="let interface of model.interfaces">
-      <td>{{interface.link.getOtherEnd(model).label}}</td>
-      <td>{{interface.port}}</td>
-    </tr>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th width="50%">Neighbor</th>
+          <th width="50%">Port</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="model.interfaces.length > 0">
+        <tr *ngFor="let interface of model.interfaces">
+          <td>{{interface.link.getOtherEnd(model).label}}</td>
+          <td>{{interface.port}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <span class="title">Link State Table</span>
-  <table>
-    <tr>
-      <th width="30%">Source</th>
-      <th width="30%">Target</th>
-      <th width="40%">Metric</th>
-    </tr>
-    <tr *ngFor="let link of model.lsdb">
-      <td>{{link.src.label}}</td>
-      <td>{{link.dst.label}}</td>
-      <td>{{link.metric}}</td>
-    </tr>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th width="30%">Source</th>
+          <th width="30%">Target</th>
+          <th width="35%">Metric</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="model.lsdb.length > 0">
+        <tr *ngFor="let link of model.lsdb">
+          <td>{{link.src.label}}</td>
+          <td>{{link.dst.label}}</td>
+          <td>{{link.metric}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-  <span class="title">Shortest Path Table</span>
-  <table>
-    <tr>
-      <th width="50%">IP</th>
-      <th width="50%">Next Hop</th>
-    </tr>
-    <tr *ngFor="let route of model.routingTable">
-      <td>{{route.ip}}</td>
-      <td>{{route.nextHop.label}}</td>
-    </tr>
-  </table>
+  <span class="title">Routing Table</span>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th width="50%">IP</th>
+          <th width="50%">Next Hop</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="model.routingTable.length > 0">
+        <tr *ngFor="let route of model.routingTable">
+          <td>{{route.ip}}</td>
+          <td>{{route.nextHop.label}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
