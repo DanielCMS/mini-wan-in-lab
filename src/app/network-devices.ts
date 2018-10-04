@@ -437,7 +437,7 @@ export class Link {
       });
 
       this.sendFromDstBuffer();
-    }, sendingTime * TIME_SLOWDOWN);
+    }, Math.floor(sendingTime * TIME_SLOWDOWN));
   }
 }
 
