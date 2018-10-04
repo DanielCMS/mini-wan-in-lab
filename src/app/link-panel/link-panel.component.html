@@ -18,17 +18,25 @@
   <table>
     <tr>
       <td width="50%">Capacity</td>
-      <td width="30%">
-        <input [(ngModel)]="model.capacity" />
+      <td width="20%">
+        <app-input
+          [value]="model.capacity.toString()"
+          [processor]="processToPosInt"
+          (changed)="model.capacity = window.parseInt($event)"
+        ></app-input>
       </td>
-      <td width="20%" class="unit">
+      <td width="30%" class="unit">
         Mbps
       </td>
     </tr>
     <tr>
       <td>Delay</td>
       <td>
-        <input [(ngModel)]="model.delay"/>
+        <app-input
+          [value]="model.delay.toString()"
+          [processor]="processToPosInt"
+          (changed)="model.delay = window.parseInt(+$event)"
+        ></app-input>
       </td>
       <td class="unit">
         ms
@@ -37,10 +45,39 @@
     <tr>
       <td>Loss Rate</td>
       <td>
-        <input [(ngModel)]="model.lossRate"/>
+        <app-input
+          [value]="model.lossRate.toString()"
+          [processor]="processToPercent"
+          (changed)="model.lossRate = window.parseFloat($event)"
+        ></app-input>
       </td>
       <td class="unit">
         %
+      </td>
+    </tr>
+    <tr>
+      <td>Buffer Size</td>
+      <td>
+        <app-input
+          [value]="model.bufferSize.toString()"
+          [processor]="processToPosInt"
+          (changed)="model.bufferSize = window.parseInt($event)"
+        ></app-input>
+      </td>
+      <td class="unit">
+        KB
+      </td>
+    </tr>
+    <tr>
+      <td>Metric</td>
+      <td>
+        <app-input
+          [value]="model.metric.toString()"
+          [processor]="processToPosInt"
+          (changed)="model.updateMetric(window.parseInt($event))"
+        ></app-input>
+      </td>
+      <td class="unit">
       </td>
     </tr>
   </table>

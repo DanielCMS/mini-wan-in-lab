@@ -4,3 +4,20 @@
   </div>
 </header>
 <app-canvas></app-canvas>
+<div class="feedback-container">
+  <div
+    *ngFor="let message of feedback.messages"
+    class="feedback-message"
+    [class.info]="message.type === MessageType.INFO"
+    [class.warning]="message.type === MessageType.WARNING"
+    [class.error]="message.type === MessageType.ERROR"
+  >
+    <span
+      class="cross-button"
+      (click)="feedback.removeMsg(message)"
+    >
+      ✕
+    </span>
+    {{message.text}}
+  </div>
+</div>
