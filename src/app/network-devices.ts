@@ -1,4 +1,5 @@
 import { Vector } from './vector';
+import jsgraphs from 'js-graph-algorithms');
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -36,11 +37,16 @@ export class Host extends Device {
       y: this.position.y + 25
     };
   }
+
+  public getIp(): string {
+    return this.interfaces[0].ip;
+  }
 }
 
 export class Router extends Device {
   public isRouter: boolean = true;
   private lsdb: Link[] = [];
+  private routingTable: Route[] = [];
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -58,8 +64,10 @@ export class Router extends Device {
       this.lsdb.push(link);
     }
 
-    this.advertiseNewLink(link);
-    this.updateRoutingTable();
+    setTimeout(() => {
+      this.advertiseNewLink(link);
+      this.updateRoutingTable();
+    });
   }
 
   public advertiseNewLink(link: Link): void {
@@ -69,6 +77,47 @@ export class Router extends Device {
   }
 
   public updateRoutingTable(): void {
+    let knownHostList: Host[] = [];
+    let idToIdx = {};
+    let idxToDevice = {};
+    let idxCounter = 0;
+
+    for (let link of this.lsdb) {
+      for (let node of [link.src, link.dst]) {
+        if (idToIdx[node.id]) {
+          continue;
+        }
+
+        if (node instanceof Host) {
+          knownHostList.push(node);
+        }
+
+        idToIdx[node.id] = idxCounter;
+        idxToDevice[idxCounter] = node;
+        idxCounter++;
+      }
+    }
+
+    let graph = new jsgraphs.WeightedGraph(idxCounter);
+
+    for (let link of this.lsdb) {
+      let srcIdx = idToIdx[link.src.id];
+      let dstIdx = idToIdx[link.dst.id];
+
+      graph.addEdge(new jsgraphs.Edge(srcIdx, dstIdx, link.metric));
+    }
+
+    let dijkstra = new jsgraphs.Dijkstra(graph, idToIdx[this.id]);
+    let routingTable: Route[] = [];
+
+    for (let host of knownHostList) {
+      let firstHop = dijkstra.pathTo(idToIdx[host.id])[0];
+      let nextHop = idxToDevice[firstHop.to()];
+
+      routingTable.push(new Route(host.getIp(), nextHop));
+    }
+
+    this.routingTable = routingTable;
   }
 }
 
@@ -96,8 +145,20 @@ export class Link {
       return this.src;
     }
   }
+
+  public getHostIfPresent(): (Host | void) {
+    if (this.src instanceof Host) {
+      return this.src;
+    } else if (this.dst instanceof Host) {
+      return this.dst;
+    }
+  }
 }
 
 export class Interface {
   constructor(public port: number, public ip: string, public link: Link) {}
+}
+
+export class Route {
+  constructor(public ip: string, public nextHop: Device) {}
 }

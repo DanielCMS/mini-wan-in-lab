@@ -58,5 +58,9 @@
       <th width="50%">IP</th>
       <th width="50%">Next Hop</th>
     </tr>
+    <tr *ngFor="let route of model.routingTable">
+      <td>{{route.ip}}</td>
+      <td>{{route.nextHop.label}}</td>
+    </tr>
   </table>
 </div>
