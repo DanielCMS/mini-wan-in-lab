@@ -178,6 +178,12 @@ export class Router extends Device {
   public detachLink(link: Link): void {
     super.detachLink(link);
 
+    let idx = this.lsdb.indexOf(link);
+
+    if (idx >= 0) {
+      this.lsdb.splice(idx, 1);
+    }
+
     this.advertiseLinkRemoval(link);
 
     setTimeout(() => {

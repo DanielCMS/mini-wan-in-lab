@@ -41,6 +41,6 @@
     height="30px"
     [src]="(isAdding() || elementSelected()) ? '/assets/images/delete.svg' : '/assets/images/delete-disabled.svg'">
   <div>
-    {{isAdding() ? 'Cancel' : 'Delete'}}
+    {{elementSelected() ? 'Delete' : 'Cancel'}}
   </div>
 </div>
