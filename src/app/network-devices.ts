@@ -175,6 +175,16 @@ export class Router extends Device {
     });
   }
 
+  public detachLink(link: Link): void {
+    super.detachLink(link);
+
+    this.advertiseLinkRemoval(link);
+
+    setTimeout(() => {
+      this.updateRoutingTable();
+    });
+  }
+
   public learnLsdb(fromRouter: Router): void {
     let uniqued = new Set([...this.lsdb, ...fromRouter.lsdb]);
     let merged: Link[] = [];
