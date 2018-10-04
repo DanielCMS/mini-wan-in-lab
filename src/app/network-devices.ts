@@ -64,10 +64,26 @@ export class Router extends Device {
       this.lsdb.push(link);
     }
 
+    this.advertiseNewLink(link);
+
     setTimeout(() => {
-      this.advertiseNewLink(link);
+      let otherEnd = link.getOtherEnd(this);
+
+      if (otherEnd instanceof Router) {
+        this.learnLsdb(otherEnd);
+      }
+
       this.updateRoutingTable();
     });
+  }
+
+  public learnLsdb(fromRouter: Router): void {
+    let uniqued = new Set([...this.lsdb, ...fromRouter.lsdb]);
+    let merged: Link[] = [];
+
+    uniqued.forEach(link => merged.push(link));
+
+    this.lsdb = merged;
   }
 
   public advertiseNewLink(link: Link): void {
@@ -77,6 +93,10 @@ export class Router extends Device {
   }
 
   public updateRoutingTable(): void {
+    if (this.lsdb.length === 0) {
+      return;
+    }
+
     let knownHostList: Host[] = [];
     let idToIdx = {};
     let idxToDevice = {};
@@ -105,12 +125,19 @@ export class Router extends Device {
       let dstIdx = idToIdx[link.dst.id];
 
       graph.addEdge(new jsgraphs.Edge(srcIdx, dstIdx, link.metric));
+      graph.addEdge(new jsgraphs.Edge(dstIdx, srcIdx, link.metric));
     }
 
     let dijkstra = new jsgraphs.Dijkstra(graph, idToIdx[this.id]);
     let routingTable: Route[] = [];
 
     for (let host of knownHostList) {
+      let idx = idToIdx[host.id];
+
+      if (!dijkstra.hasPathTo(idx)) {
+        continue;
+      }
+
       let firstHop = dijkstra.pathTo(idToIdx[host.id])[0];
       let nextHop = idxToDevice[firstHop.to()];
 
