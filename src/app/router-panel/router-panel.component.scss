@@ -66,6 +66,10 @@
     font-size: 14px;
     margin-top: 5px;
 
+    tbody {
+      border-top: $grey 1px solid;
+    }
+
     th, td {
       font-weight: normal;
       background: transparent;
@@ -73,9 +77,10 @@
       font-family: Lato-Regular;
       font-size: 14px;
     }
-
-    tr:nth-child(2) {
-      border-top: $grey 1px solid;
-    }
   }
+}
+
+.table-container {
+  max-height: 150px;
+  overflow: auto;
 }

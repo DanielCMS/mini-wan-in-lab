@@ -39,28 +39,41 @@ export class CanvasComponent implements OnInit {
   }
 
   private requestAddingRouter(): void {
-    this.canvasStatus = CanvasStatus.AddingRouter;
+    if (this.canvasStatus === CanvasStatus.AddingRouter) {
+      this.canvasStatus = CanvasStatus.Idle;
+    } else {
+      this.canvasStatus = CanvasStatus.AddingRouter;
+    }
   }
 
   private requestAddingHost(): void {
-    this.canvasStatus = CanvasStatus.AddingHost;
+    if (this.canvasStatus === CanvasStatus.AddingHost) {
+      this.canvasStatus = CanvasStatus.Idle;
+    } else {
+      this.canvasStatus = CanvasStatus.AddingHost;
+    }
   }
 
   private requestAddingLink(): void {
-    this.canvasStatus = CanvasStatus.AddingLink;
+    if (this.canvasStatus === CanvasStatus.AddingLink) {
+      this.canvasStatus = CanvasStatus.Idle;
+    } else {
+      this.canvasStatus = CanvasStatus.AddingLink;
+    }
   }
 
   private requestDeleting(): void {
-    if(this.canvasStatus == CanvasStatus.Idle){
+    if (this.canvasStatus === CanvasStatus.Idle) {
       this.deviceRegistry.removeElementById(this.activeDeviceId);
     }
+
     this.canvasStatus = CanvasStatus.Idle;
     this.activeDeviceId = null;
   }
 
   private setupKeyboardEvents(): void {
     fromEvent(document, 'keydown').subscribe((e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && document.activeElement === document.body) {
         this.canvasStatus = CanvasStatus.Idle;
         this.activeDeviceId = null;
       }

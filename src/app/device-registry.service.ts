@@ -3,6 +3,8 @@ import { Vector } from './vector';
 import { Host, Router, Link, Device } from './network-devices';
 import { v1 } from 'uuid';
 import { PanelRegistry } from './panel-registry.service';
+import { FeedbackService } from './feedback.service';
+
 
 const ACCESS_IP_PREFIX = '192.168.';
 const BACKBONE_IP_PREFIX = '10.0.';
@@ -24,7 +26,7 @@ export class DeviceRegistry {
   private deviceHashTable: { [id: string]: Device } = {};
   private linkHashTable: { [id: string]: Link } = {}; 
 
-  constructor(private panelRegistry: PanelRegistry) {
+  constructor(private panelRegistry: PanelRegistry, private feedback: FeedbackService) {
   }
 
   public addRouter(position: Vector): void {
@@ -51,7 +53,7 @@ export class DeviceRegistry {
 
   public addLink(src: Device, dst: Device): void {
     if (this.isDuplicateLink(src, dst)) {
-      console.log("Ignoring duplicate link");
+      this.feedback.sendError("The link to add already exists.");
 
       return;
     }
@@ -62,20 +64,20 @@ export class DeviceRegistry {
       ipPair = this.generateInterRouterIpPair();
     } else if (this.isAccessLink(src, dst)) {
       if ((src instanceof Host) && (src.interfaces.length > 0)) {
-        console.log("A host cannot have two Gateways");
+        this.feedback.sendError("A host cannot have two gateways.");
 
         return;
       }
 
       if ((dst instanceof Host) && (dst.interfaces.length > 0)) {
-        console.log("A host cannot have two Gateways");
+        this.feedback.sendError("A host cannot have two gateways.");
 
         return;
       }
 
       ipPair = this.generateAccessLinkIpPair();
     } else {
-      console.log("Ignoring invalid link");
+      this.feedback.sendError("Two hosts cannot be directly connected.");
 
       return;
     }
@@ -125,6 +127,7 @@ export class DeviceRegistry {
       let idx = this.linkList.indexOf(element);
 
       this.linkList.splice(idx, 1);
+      element.cleanUp();
 
       for (let node of [element.src, element.dst]) {
         node.detachLink(element);

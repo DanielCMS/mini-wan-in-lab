@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { MessageType, FeedbackService } from './feedback.service';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'mini-wan-in-lab';
+
+  constructor(private feedback: FeedbackService) {
+  }
+
+  private MessageType = MessageType;
+
 }
