@@ -30,4 +30,8 @@ export class HostPanelComponent implements OnInit {
     this.close.emit();
   }
 
+  private addNewFlow(dest: string, data: number, startTime: number): void {
+    this.model.addNewFlow(dest, data, startTime);
+  }
+
 }

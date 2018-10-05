@@ -4,6 +4,8 @@ import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
 import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE } from './constants';
 
+var IPv4 = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/;
+
 export class Device {
   public interfaces: Interface[] = [];
 
@@ -33,6 +35,8 @@ export class Device {
 
 export class Host extends Device {
   public isHost: boolean = true;
+  public flowList: Flow[];
+  public algorithm: string;
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -41,6 +45,17 @@ export class Host extends Device {
       x: this.position.x - 12,
       y: this.position.y + 25
     };
+    this.algorithm = "Reno";
+
+    this.flowList = [];
+  }
+
+  addNewFlow(dest: string, data: number, startTime: number): void {
+    if (IPv4.test(dest) && data > 0 && startTime >= 0) {
+      this.flowList.push({isFlow: true, flowDestination: dest, dataAmount: data, startTime: startTime});
+    } else{
+      window.alert('Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).');
+    }
   }
 
   public getIp(): string {
@@ -496,6 +511,13 @@ export class Link {
       }
     }
   }
+}
+
+export class Flow {
+  public isFlow: boolean = true;
+  public flowDestination: string;
+  public dataAmount: number;
+  public startTime: number;
 }
 
 export class Interface {
