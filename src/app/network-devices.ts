@@ -51,7 +51,7 @@ export class Host extends Device {
   }
 
   addNewFlow(dest: string, data: number, startTime: number): void {
-    if(IPv4.test(dest) && data > 0 && startTime >= 0){
+    if (IPv4.test(dest) && data > 0 && startTime >= 0) {
       this.flowList.push({isFlow: true, flowDestination: dest, dataAmount: data, startTime: startTime});
     } else{
       window.alert('Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).');
