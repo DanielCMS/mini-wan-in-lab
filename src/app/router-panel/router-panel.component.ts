@@ -21,8 +21,8 @@ export class RouterPanelComponent implements OnInit {
 
   ngOnInit() {
     this.anchor = {
-      x: this.model.position.x + this.canvasOffset.x + X_OFFSET,
-      y: this.model.position.y + this.canvasOffset.y
+      x: Math.min(this.model.position.x + this.canvasOffset.x + X_OFFSET, window.innerWidth - 230),
+      y: Math.min(this.model.position.y + this.canvasOffset.y, window.innerHeight - 230)      
     };
   }
 
