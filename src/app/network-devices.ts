@@ -2,9 +2,7 @@ import { Subject } from 'rxjs';
 import { Vector } from './vector';
 import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
-import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE } from './constants';
-
-var IPv4 = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/;
+import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, IPv4 } from './constants';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -37,6 +35,7 @@ export class Host extends Device {
   public isHost: boolean = true;
   public flowList: Flow[];
   public algorithm: string;
+  public hasInvalidFormat: boolean = false;
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -52,9 +51,9 @@ export class Host extends Device {
 
   addNewFlow(dest: string, data: number, startTime: number): void {
     if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      this.flowList.push({isFlow: true, flowDestination: dest, dataAmount: data, startTime: startTime});
+      this.flowList.push({flowDestination: dest, dataAmount: data, startTime: startTime});
     } else{
-      window.alert('Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).');
+      this.hasInvalidFormat = true;
     }
   }
 
@@ -82,7 +81,7 @@ export class Host extends Device {
     if (gateway) {
       gateway.link.sendPacketFrom(this, packet);
     } else {
-      console.log(`Dropping packet at ${this.label} due to missing gateway.`);
+      (`Dropping packet at ${this.label} due to missing gateway.`);
     }
   }
 }
@@ -514,7 +513,6 @@ export class Link {
 }
 
 export class Flow {
-  public isFlow: boolean = true;
   public flowDestination: string;
   public dataAmount: number;
   public startTime: number;
