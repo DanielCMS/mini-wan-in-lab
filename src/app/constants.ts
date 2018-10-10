@@ -11,3 +11,4 @@ export const RWND_INIT = Number.MAX_VALUE;
 export const SSTHRESH_INIT = Number.MAX_VALUE;
 
 export const BETA = 2;					// RTO = BETA * RTT
+export const MEGA = 1024 * 1024;		// 1 MB = 1024 * 1024 Byte

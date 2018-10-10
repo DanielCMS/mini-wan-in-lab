@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import { Vector } from './vector';
 import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
-import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE, HEADER_SIZE, CTL_SIZE, IPv4 } from './constants';
+import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE, HEADER_SIZE, CTL_SIZE, IPv4, MEGA } from './constants';
 import {Flow, FlowReceived} from './flow';
 import { v1 } from 'uuid';
 
@@ -80,16 +80,43 @@ export class Host extends Device {
     let flowId = packet.getFlowId();
 
     if (packet.type === PacketType.Syn) {
+      console.log('SYN');
       let flow = new FlowReceived(flowId);
       this.receiveList.push(flow);    // Construct the session
       setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE)));
+      return;
     }
 
     if (packet.type === PacketType.SynAck) {
-      let flow = this.flowList.filter(r => r.flowId === flowId);
-      if (flow[0]){
-        flow[0].onReceive(packet);
+      console.log('SYNACK');
+      let flows = this.flowList.filter(r => r.flowId === flowId);
+      if (flows.length > 0){
+        let flow = flows[0];
+        flow.onReceive(packet);
       }
+      return;
+    }
+
+    if (packet.type === PacketType.Payload) {
+      console.log('PAYLOAD');
+      let flows = this.receiveList.filter(r => r.flowId === flowId);
+      if (flows.length > 0) {
+        let flow = flows[0];
+        flow.onReceive(packet);
+        setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE)));
+      }
+      return;
+    }
+
+    if (packet.type === PacketType.Ack) {
+      console.log('ACK');
+      let flows = this.flowList.filter(r => r.flowId === flowId);
+      if (flows.length > 0) {
+        let flow = flows[0];
+//        console.log(packet.seqNum);
+        flow.onReceive(packet);
+      }
+      return;
     }    
 
     // Send ack packet here
@@ -561,13 +588,15 @@ export class Packet {
   private dest: string;
   private sequenceNumber;
   private flowId: number;
+  public size: number;
 
   constructor(public id:number, public srcIp: string, public dstIp: string, public type: PacketType,
-    public seqNum: number, public size: number, public payload?: any) {
+    public seqNum: number, public s: number, public payload?: any) {
     this.flowId = id;
     this.src = srcIp;
     this.dest = dstIp;
     this.sequenceNumber = seqNum;
+    this.size = s;
   }
 
   public markSent(): void {
