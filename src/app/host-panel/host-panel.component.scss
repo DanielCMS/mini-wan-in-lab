@@ -95,8 +95,18 @@ $check-color: $brand-success;
   clip-path: polygon(0% 50%, 50% 50%, 0% 0%);
 }
 
+.countdown {
+  margin: auto;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  border-radius: 50%;
+  width: $loader-size;
+  height: $loader-size;
+}
+
 .circle-loader {
-  margin-bottom: $loader-size/2;
   border: 2px solid rgba(0, 0, 0, 0.2);
   border-left-color: $check-color;
   animation: loader-spin 1.2s infinite linear;

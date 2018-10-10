@@ -2,7 +2,9 @@ import { Subject } from 'rxjs';
 import { Vector } from './vector';
 import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
-import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, IPv4 } from './constants';
+import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE, HEADER_SIZE, CTL_SIZE, IPv4 } from './constants';
+import {Flow, FlowReceived} from './flow';
+import { v1 } from 'uuid';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -33,7 +35,8 @@ export class Device {
 
 export class Host extends Device {
   public isHost: boolean = true;
-  public flowList: Flow[];
+  public flowList: Flow[] = [];
+  public receiveList: FlowReceived[] = [];
   public algorithm: string;
   public hasInvalidFormat: boolean = false;
 
@@ -47,11 +50,13 @@ export class Host extends Device {
     this.algorithm = "Reno";
 
     this.flowList = [];
+    this.receiveList = [];
   }
 
   addNewFlow(dest: string, data: number, startTime: number): void {
     if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      this.flowList.push({flowDestination: dest, dataAmount: data, startTime: startTime});
+      let id = v1();
+      this.flowList.push(new Flow(id, this, dest, data, startTime));
     } else{
       this.hasInvalidFormat = true;
     }
@@ -71,6 +76,21 @@ export class Host extends Device {
     if (packet.dstIp !== this.getIp()) {
       return;
     }
+
+    let flowId = packet.getFlowId();
+
+    if (packet.type === PacketType.Syn) {
+      let flow = new FlowReceived(flowId);
+      this.receiveList.push(flow);    // Construct the session
+      setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE)));
+    }
+
+    if (packet.type === PacketType.SynAck) {
+      let flow = this.flowList.filter(r => r.flowId === flowId);
+      if (flow[0]){
+        flow[0].onReceive(packet);
+      }
+    }    
 
     // Send ack packet here
   }
@@ -512,11 +532,6 @@ export class Link {
   }
 }
 
-export class Flow {
-  public flowDestination: string;
-  public dataAmount: number;
-  public startTime: number;
-}
 
 export class Interface {
   constructor(public port: number, public ip: string, public link: Link) {}
@@ -531,7 +546,9 @@ export enum PacketType {
   Ack,
   LinkUp,
   LinkDown,
-  LSA
+  LSA,
+  Syn,
+  SynAck
 }
 
 const INIT_TTL = 64;
@@ -540,9 +557,17 @@ export class Packet {
   public ttl: number = INIT_TTL;
   private sentTime: number;
   private receivedTime: number;
+  private src: string;
+  private dest: string;
+  private sequenceNumber;
+  private flowId: number;
 
-  constructor(public srcIp: string, public dstIp: string, public type: PacketType,
-    public sequenceNumber: number, public size: number, public payload?: any) {
+  constructor(public id:number, public srcIp: string, public dstIp: string, public type: PacketType,
+    public seqNum: number, public size: number, public payload?: any) {
+    this.flowId = id;
+    this.src = srcIp;
+    this.dest = dstIp;
+    this.sequenceNumber = seqNum;
   }
 
   public markSent(): void {
@@ -555,5 +580,9 @@ export class Packet {
 
   public getTransTime(): number {
     return this.receivedTime - this.sentTime;
+  }
+
+  public getFlowId(): number {
+    return this.flowId;
   }
 }
