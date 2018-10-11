@@ -3,6 +3,13 @@ import { fromEvent, Subject } from "rxjs";
 import { filter, switchMap, takeUntil, map } from "rxjs/operators";
 import { Vector } from "./vector";
 
+function clampX(x: number): number {
+  return Math.max(Math.min(x, window.innerWidth), 0);
+}
+function clampY(y: number): number {
+  return Math.max(Math.min(y, window.innerHeight), 0);
+}
+
 @Directive({
   selector: '[draggable]'
 })
@@ -38,16 +45,16 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
     let mousedrag$ = mousedown$.pipe(
       filter((e: MouseEvent) => e.button === 0),
       switchMap((e: MouseEvent) => {
-        let startX = e.clientX;
-        let startY = e.clientY;
+        let startX = clampX(e.clientX);
+        let startY = clampX(e.clientY);
 
         return mousemove$.pipe(
           map((e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
             this.delta = {
-              x: e.clientX - startX,
-              y: e.clientY - startY
+              x: clampX(e.clientX) - startX,
+              y: clampY(e.clientY) - startY
             };
           }),
           takeUntil(mouseup$)

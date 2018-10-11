@@ -22,8 +22,8 @@ export class LinkPanelComponent implements OnInit {
 
   ngOnInit() {
     this.anchor = {
-      x: (this.model.src.position.x + this.model.dst.position.x) / 2 + this.canvasOffset.x,
-      y: (this.model.src.position.y + this.model.dst.position.y) / 2 + this.canvasOffset.y + Y_OFFSET
+      x: Math.min((this.model.src.position.x + this.model.dst.position.x) / 2 + this.canvasOffset.x, window.innerWidth - 230),
+      y: Math.min((this.model.src.position.y + this.model.dst.position.y) / 2 + this.canvasOffset.y + Y_OFFSET, window.innerHeight - 230),
     };
   }
 

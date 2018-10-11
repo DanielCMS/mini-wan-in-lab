@@ -1,3 +1,14 @@
 .link {
   pointer-events: all;
 }
+
+.logo-img {
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none; 
+  -webkit-user-drag: none;  /* Chrome all / Safari all */
+  -moz-user-drag: none;     /* Firefox all */
+  -ms-user-drag: none;      /* IE 10+ */
+  user-drag: none;
+}

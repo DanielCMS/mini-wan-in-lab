@@ -24,6 +24,55 @@
       <td>Gateway</td>
       <td>{{model.interfaces.length > 0 ? model.interfaces[0].link.getOtherEnd(model).label : "N/A"}}</td>
     </tr>
+    <tr>
+      <td>TCP Algorithm</td>
+      <td>
+        <select [(ngModel)]="model.algorithm">
+          <option value="Reno">Reno</option>
+          <option value="Vegas">Vegas</option>
+          <option value="FAST">FAST</option>
+        </select>
+      </td>
+    </tr>
   </table>
   <span class="title">Flows</span>
+  <div style = "max-height: 200px; overflow-y:scroll;">
+    <table>
+      <tr>
+        <td width="3%"> </td>
+        <td width="43%">Destination</td>
+        <td width="27%">Data</td>
+        <td width="27%">Status</td>      
+      </tr>
+      <tr *ngFor="let flow of model.flowList; let i = index">
+        <td width="3%"> {{i+1}} </td>
+        <td width="43%" style = "font-size: 12px"> {{flow.flowDestination}} </td>
+        <td width="27%"> {{flow.dataAmount}} </td>
+        <!--<td width="27%"><div class = "circle-loader load-complete checkmark draw"></div></td>   -->  
+        <td width="27%">
+          <ng-container [ngSwitch]="true">
+            <div *ngSwitchCase="flow.flowStatus === 0"> <div class = "countdown"><p style="font-size:13px; margin-top: -5px; color: gray">{{flow.waitingTime}}</p></div> </div>
+            <div *ngSwitchCase="flow.flowStatus === 1"> <div class = "circle-loader load-complete checkmark draw"></div></div>
+            <div *ngSwitchDefault><div class = "circle-loader"></div></div>
+          </ng-container>
+        </td>
+      </tr>
+      <tr>
+        <td width="3%"> 
+          <button (click)="addNewFlow(
+            flowDestination.value,
+            dataAmount.value,
+            startTime.value);
+            flowDestination.value = '';
+            dataAmount.value = '';
+            startTime.value = '';
+            ">Add
+          </button> 
+        </td>
+        <td width="43%"> <input size="9" #flowDestination> </td>
+        <td width="27%"> <input size="4" #dataAmount> </td>
+        <td width="27%"> <input size="4" #startTime> </td>      
+      </tr>    
+    </table>
+  </div>
 </div>
