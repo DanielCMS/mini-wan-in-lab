@@ -2,9 +2,9 @@ import { Subject } from 'rxjs';
 import { Vector } from './vector';
 import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
-import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE } from './constants';
-
-var IPv4 = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/;
+import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE, HEADER_SIZE, CTL_SIZE, IPv4, MEGA } from './constants';
+import {Flow, FlowReceived} from './flow';
+import { v1 } from 'uuid';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -35,8 +35,10 @@ export class Device {
 
 export class Host extends Device {
   public isHost: boolean = true;
-  public flowList: Flow[];
+  public flowList: Flow[] = [];
+  public receiveList: FlowReceived[] = [];
   public algorithm: string;
+  public hasInvalidFormat: boolean = false;
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -48,13 +50,15 @@ export class Host extends Device {
     this.algorithm = "Reno";
 
     this.flowList = [];
+    this.receiveList = [];
   }
 
   addNewFlow(dest: string, data: number, startTime: number): void {
     if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      this.flowList.push({isFlow: true, flowDestination: dest, dataAmount: data, startTime: startTime});
+      let id = v1();
+      this.flowList.push(new Flow(id, this, dest, data, startTime));
     } else{
-      window.alert('Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).');
+      this.hasInvalidFormat = true;
     }
   }
 
@@ -73,6 +77,45 @@ export class Host extends Device {
       return;
     }
 
+    let flowId = packet.getFlowId();
+
+    if (packet.type === PacketType.Syn) {
+      let flow = new FlowReceived(flowId);
+      this.receiveList.push(flow);    // Construct the session
+      let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE);
+      setTimeout(()=>this.sendPacket(pkt));
+      return;
+    }
+
+    if (packet.type === PacketType.SynAck) {
+      let flows = this.flowList.filter(r => r.flowId === flowId);
+      if (flows.length > 0){
+        let flow = flows[0];
+        flow.onReceive(packet);
+      }
+      return;
+    }
+
+    if (packet.type === PacketType.Payload) {
+      let flows = this.receiveList.filter(r => r.flowId === flowId);
+      if (flows.length > 0) {
+        let flow = flows[0];
+        flow.onReceive(packet);
+        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
+        setTimeout(()=>this.sendPacket(pkt));
+      }
+      return;
+    }
+
+    if (packet.type === PacketType.Ack) {
+      let flows = this.flowList.filter(r => r.flowId === flowId);
+      if (flows.length > 0) {
+        let flow = flows[0];
+        flow.onReceive(packet);
+      }
+      return;
+    }
+
     // Send ack packet here
   }
 
@@ -82,7 +125,7 @@ export class Host extends Device {
     if (gateway) {
       gateway.link.sendPacketFrom(this, packet);
     } else {
-      console.log(`Dropping packet at ${this.label} due to missing gateway.`);
+      (`Dropping packet at ${this.label} due to missing gateway.`);
     }
   }
 }
@@ -224,28 +267,28 @@ export class Router extends Device {
   }
 
   public advertiseNewLink(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLinkRemoval(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsdb(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, this.lsdb);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsa(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, []);
 
     this.broadcast(packet, []);
@@ -391,7 +434,7 @@ export class Link {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
       if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
 
         return;
       }
@@ -406,7 +449,7 @@ export class Link {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
       if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
 
         return;
       }
@@ -445,6 +488,10 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
+    setTimeout(()=> {
+      this.sendFromSrcBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
       this.srcLatencyData.push(packet.getTransTime());
@@ -453,8 +500,6 @@ export class Link {
       setTimeout(() => {
         this.dst.receivePacket(packet, this);
       });
-
-      this.sendFromSrcBuffer();
     }, sendingTime * TIME_SLOWDOWN);
   }
 
@@ -483,6 +528,10 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
+    setTimeout(()=>{
+      this.sendFromDstBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
       this.dstLatencyData.push(packet.getTransTime());
@@ -492,7 +541,6 @@ export class Link {
         this.src.receivePacket(packet, this);
       });
 
-      this.sendFromDstBuffer();
     }, Math.floor(sendingTime * TIME_SLOWDOWN));
   }
 
@@ -513,12 +561,6 @@ export class Link {
   }
 }
 
-export class Flow {
-  public isFlow: boolean = true;
-  public flowDestination: string;
-  public dataAmount: number;
-  public startTime: number;
-}
 
 export class Interface {
   constructor(public port: number, public ip: string, public link: Link) {}
@@ -533,7 +575,9 @@ export enum PacketType {
   Ack,
   LinkUp,
   LinkDown,
-  LSA
+  LSA,
+  Syn,
+  SynAck
 }
 
 const INIT_TTL = 64;
@@ -543,7 +587,7 @@ export class Packet {
   private sentTime: number;
   private receivedTime: number;
 
-  constructor(public srcIp: string, public dstIp: string, public type: PacketType,
+  constructor(public flowId:number, public srcIp: string, public dstIp: string, public type: PacketType,
     public sequenceNumber: number, public size: number, public payload?: any) {
   }
 
@@ -557,5 +601,9 @@ export class Packet {
 
   public getTransTime(): number {
     return this.receivedTime - this.sentTime;
+  }
+
+  public getFlowId(): number {
+    return this.flowId;
   }
 }
