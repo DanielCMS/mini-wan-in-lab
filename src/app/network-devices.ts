@@ -80,7 +80,6 @@ export class Host extends Device {
     let flowId = packet.getFlowId();
 
     if (packet.type === PacketType.Syn) {
-      console.log('SYN');
       let flow = new FlowReceived(flowId);
       this.receiveList.push(flow);    // Construct the session
       setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE)));
@@ -88,7 +87,6 @@ export class Host extends Device {
     }
 
     if (packet.type === PacketType.SynAck) {
-      console.log('SYNACK');
       let flows = this.flowList.filter(r => r.flowId === flowId);
       if (flows.length > 0){
         let flow = flows[0];
@@ -98,7 +96,7 @@ export class Host extends Device {
     }
 
     if (packet.type === PacketType.Payload) {
-      console.log('PAYLOAD');
+      console.log(packet.sequenceNumber);
       let flows = this.receiveList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
@@ -109,15 +107,13 @@ export class Host extends Device {
     }
 
     if (packet.type === PacketType.Ack) {
-      console.log('ACK');
       let flows = this.flowList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
-//        console.log(packet.seqNum);
         flow.onReceive(packet);
       }
       return;
-    }    
+    }
 
     // Send ack packet here
   }
@@ -270,28 +266,28 @@ export class Router extends Device {
   }
 
   public advertiseNewLink(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLinkRemoval(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsdb(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, this.lsdb);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsa(link: Link): void {
-    let packet = new Packet(BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, []);
 
     this.broadcast(packet, []);
@@ -584,19 +580,9 @@ export class Packet {
   public ttl: number = INIT_TTL;
   private sentTime: number;
   private receivedTime: number;
-  private src: string;
-  private dest: string;
-  private sequenceNumber;
-  private flowId: number;
-  public size: number;
 
-  constructor(public id:number, public srcIp: string, public dstIp: string, public type: PacketType,
-    public seqNum: number, public s: number, public payload?: any) {
-    this.flowId = id;
-    this.src = srcIp;
-    this.dest = dstIp;
-    this.sequenceNumber = seqNum;
-    this.size = s;
+  constructor(public flowId:number, public srcIp: string, public dstIp: string, public type: PacketType,
+    public sequenceNumber: number, public size: number, public payload?: any) {
   }
 
   public markSent(): void {

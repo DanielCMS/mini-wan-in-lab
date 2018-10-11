@@ -52,8 +52,8 @@
         <td width="27%">
           <ng-container [ngSwitch]="true">
             <div *ngSwitchCase="flow.flowStatus === 0"> <div class = "countdown"><p style="font-size:13px; margin-top: -5px; color: gray">{{flow.waitingTime}}</p></div> </div>
-            <div *ngSwitchCase="flow.flowStatus === 1"> <div class = "circle-loader"></div></div>
-            <div *ngSwitchDefault><div class = "circle-loader load-complete checkmark draw"></div></div>
+            <div *ngSwitchCase="flow.flowStatus === 1"> <div class = "circle-loader load-complete checkmark draw"></div></div>
+            <div *ngSwitchDefault><div class = "circle-loader"></div></div>
           </ng-container>
         </td>
       </tr>

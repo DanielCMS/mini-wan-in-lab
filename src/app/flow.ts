@@ -65,8 +65,13 @@ export class Flow {
     }
 
     if (packet.type === PacketType.Ack) {
+      if (this.toSend >= this.packetList.length) {
+        this.flowStatus = FlowStatus.Complete;
+        return;
+      }
       if (this.cwnd < this.ssthresh) {
         this.flowStatus = FlowStatus.SlowStart;
+        this.windowStart = packet.sequenceNumber;
         this.cwnd = this.cwnd + 1;
         this.slowStart();
       } else {
@@ -89,9 +94,10 @@ export class Flow {
 
   private slowStart(): void {
     let i = this.toSend;
-    let stop = this.toSend + this.cwnd;
-    for (; i < stop; i++) {
-      setTimeout(()=>this.sendingHost.sendPacket(this.packetList[this.toSend]));
+    let stop = this.windowStart + this.cwnd;
+    for (; i < stop && i < this.packetList.length; i++) {
+      let pkt = this.packetList[this.toSend];
+      setTimeout(()=>this.sendingHost.sendPacket(pkt));
       this.toSend++;
     }
   }
@@ -107,12 +113,11 @@ export class FlowReceived {
     this.flowId = id;
     this.rwnd = RWND_INIT;
     this.pktRecieved = [];
-    this.nextAck = 0;
+    this.nextAck = 1;
   }
 
-  public onReceive (packet: Packet): void {
-    this.pktRecieved.push(packet.seqNum);
-    console.log(packet.seqNum);
+  public onReceive(packet: Packet): void {
+    this.pktRecieved.push(packet.sequenceNumber);
     if (this.pktRecieved.length > this.rwnd) {
       this.pktRecieved.shift();
     }
