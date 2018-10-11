@@ -97,7 +97,6 @@ export class Host extends Device {
     }
 
     if (packet.type === PacketType.Payload) {
-//      console.log('receive',packet.sequenceNumber);
       let flows = this.receiveList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
@@ -121,9 +120,6 @@ export class Host extends Device {
   }
 
   public sendPacket(packet: Packet): void {
-    if (packet.type === PacketType.Payload) {
-//      console.log('send',packet.sequenceNumber);
-    }
     let gateway = this.interfaces[0];
 
     if (gateway) {
@@ -492,6 +488,10 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
+    setTimeout(()=> {
+      this.sendFromSrcBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
       this.srcLatencyData.push(packet.getTransTime());
@@ -500,8 +500,6 @@ export class Link {
       setTimeout(() => {
         this.dst.receivePacket(packet, this);
       });
-
-      this.sendFromSrcBuffer();
     }, sendingTime * TIME_SLOWDOWN);
   }
 
@@ -530,6 +528,10 @@ export class Link {
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
 
+    setTimeout(()=>{
+      this.sendFromDstBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
       this.dstLatencyData.push(packet.getTransTime());
@@ -539,7 +541,6 @@ export class Link {
         this.src.receivePacket(packet, this);
       });
 
-      this.sendFromDstBuffer();
     }, Math.floor(sendingTime * TIME_SLOWDOWN));
   }
 
