@@ -82,7 +82,8 @@ export class Host extends Device {
     if (packet.type === PacketType.Syn) {
       let flow = new FlowReceived(flowId);
       this.receiveList.push(flow);    // Construct the session
-      setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE)));
+      let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE);
+      setTimeout(()=>this.sendPacket(pkt));
       return;
     }
 
@@ -96,12 +97,13 @@ export class Host extends Device {
     }
 
     if (packet.type === PacketType.Payload) {
-      console.log(packet.sequenceNumber);
+//      console.log('receive',packet.sequenceNumber);
       let flows = this.receiveList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
         flow.onReceive(packet);
-        setTimeout(()=>this.sendPacket(new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE)));
+        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
+        setTimeout(()=>this.sendPacket(pkt));
       }
       return;
     }
@@ -119,6 +121,9 @@ export class Host extends Device {
   }
 
   public sendPacket(packet: Packet): void {
+    if (packet.type === PacketType.Payload) {
+//      console.log('send',packet.sequenceNumber);
+    }
     let gateway = this.interfaces[0];
 
     if (gateway) {
@@ -433,7 +438,7 @@ export class Link {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
       if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
 
         return;
       }
@@ -448,7 +453,7 @@ export class Link {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
       if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
 
         return;
       }

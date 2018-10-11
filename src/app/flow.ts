@@ -20,13 +20,17 @@ export class Flow {
   public ssthresh: number;
   public windowStart: number;
   public toSend: number;
+  public maxAck: number = 0;
+  public maxAckDup: number = 0;
+  public timeSYN: number;
+  public timeSYNACK: number;
   constructor(public id: number, public src: Host, public destIP: string, public data: number, public time: number) {
     this.flowId = id;
     this.flowSource = src.getIp();
     this.flowDestination = destIP + "/24";
     this.sendingHost = src;
-    this.dataAmount = data;
-    data = data * MEGA;
+    this.dataAmount = data;      // in MB
+    data = data * MEGA;          // in B
     this.waitingTime = time;
     this.initTime = new Date().getTime();
     this.algorithm = AlgType[src.algorithm];
@@ -52,6 +56,7 @@ export class Flow {
   private handShake(): void {
     this.flowStatus = FlowStatus.HandShake;
     this.packetSYN = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
+    this.timeSYN = Date.now();
     setTimeout(()=>this.sendingHost.sendPacket(this.packetSYN));
   }
 
@@ -59,32 +64,39 @@ export class Flow {
     if (packet.type === PacketType.SynAck) {
       this.packetACK = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
       setTimeout(()=>this.sendingHost.sendPacket(this.packetACK));
-      this.RTT = packet.getTransTime() + this.packetSYN.getTransTime();
+      //this.RTT = packet.getTransTime() + this.packetSYN.getTransTime();
+      //this.RTO = BETA * this.RTT;
+      //console.log('RTO', this.RTO);
+      this.timeSYNACK = Date.now();
+      console.log('RTT', this.timeSYNACK-this.timeSYN);
+      this.RTT = this.timeSYNACK-this.timeSYN;
       this.RTO = BETA * this.RTT;
-      this.sendPackets();
+      switch(this.algorithm) {
+        case AlgType.Reno:
+          this.sendPackets_Reno();
+          break;
+        case AlgType.Vegas:
+          break;
+        default:
+          break;
+      }
+      return;
     }
-
     if (packet.type === PacketType.Ack) {
-      if (this.toSend >= this.packetList.length) {
-        this.flowStatus = FlowStatus.Complete;
-        return;
-      }
-      if (this.cwnd < this.ssthresh) {
-        this.flowStatus = FlowStatus.SlowStart;
-        this.windowStart = packet.sequenceNumber;
-        this.cwnd = this.cwnd + 1;
-        this.slowStart();
-      } else {
-        this.flowStatus = FlowStatus.CA;
-        this.cwnd = this.cwnd + 1.0/this.cwnd;
-
+      switch(this.algorithm) {
+        case AlgType.Reno:
+          this.onReceiveAck_Reno(packet);
+          break;
+        case AlgType.Vegas:
+          break;
+        default:
+          break;
       }
     }
-
   }
 
-  private sendPackets(): void {
-    this.flowStatus = FlowStatus.SlowStart;
+//-------- Below is the code for TCP Reno --------
+  private sendPackets_Reno(): void {
     this.cwnd = 1;
     this.ssthresh = SSTHRESH_INIT;
     this.toSend = 0;
@@ -93,16 +105,76 @@ export class Flow {
   }
 
   private slowStart(): void {
+    this.flowStatus = FlowStatus.SS;
     let i = this.toSend;
     let stop = this.windowStart + this.cwnd;
     for (; i < stop && i < this.packetList.length; i++) {
       let pkt = this.packetList[this.toSend];
       setTimeout(()=>this.sendingHost.sendPacket(pkt));
+      setTimeout(()=>this.timeOut(pkt), this.RTO);
       this.toSend++;
     }
   }
 
-}
+  private congestionAvoidance(): void {
+    console.log('CA entered!', this.ssthresh);
+    this.flowStatus = FlowStatus.CA;
+    let i = this.toSend;
+    let stop = this.windowStart + this.cwnd;
+    for (; i < stop && i < this.packetList.length; i++) {
+      let pkt = this.packetList[this.toSend];
+      setTimeout(()=>this.sendingHost.sendPacket(pkt));
+      setTimeout(()=>this.timeOut(pkt), this.RTO);
+      this.toSend++;
+    }
+  }
+
+  private timeOut(pkt: Packet): void {
+    if (pkt.sequenceNumber >= this.windowStart) {    // Meaning this packet has not been ack'ed yet
+      console.log('time out detected!', pkt.sequenceNumber);
+      setTimeout(()=>this.sendingHost.sendPacket(pkt));
+      setTimeout(()=>this.timeOut(pkt), this.RTO);
+      this.cwnd = 1;            // According to Page 7, https://tools.ietf.org/html/rfc5681#section-3.1
+      let flightSize = this.toSend - this.windowStart;
+      this.ssthresh = Math.max(flightSize/2, 2);
+      this.slowStart();
+    } else {
+      return;
+    }
+  }
+
+  public onReceiveAck_Reno(packet: Packet): void {
+    if (this.toSend >= this.packetList.length) {
+      this.flowStatus = FlowStatus.Complete;
+      return;
+    }
+    console.log(packet.sequenceNumber);
+
+    if (packet.sequenceNumber > this.maxAck) {
+      this.maxAck = packet.sequenceNumber;
+      this.maxAckDup = 1;
+
+      if (this.cwnd < this.ssthresh) {
+        this.windowStart = packet.sequenceNumber;
+        this.cwnd = this.cwnd + 1;
+        this.slowStart();
+      } else {
+        this.windowStart = packet.sequenceNumber;
+        this.cwnd = this.cwnd + 1.0/this.cwnd;
+        this.congestionAvoidance();
+      }
+    } else {
+      this.maxAckDup++;
+
+
+    }
+  }
+//-------- Above is the code for TCP Reno --------
+
+
+
+}  
+
 
 export class FlowReceived {
   public flowId: number;          // id of the received flow
@@ -140,9 +212,8 @@ export enum AlgType {
 export enum FlowStatus {
   Waiting,
   Complete,
-  SlowStart,
-  Retransmit,
-  CA,
-  FRFR,
+  SS,    // slow start
+  CA,    // comgestion avoidance
+  FRFR,  // fast retansmit/fast recovery
   HandShake
 }
