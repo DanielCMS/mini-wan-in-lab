@@ -26,6 +26,7 @@ export class Flow {
   public maxAckDup: number = 0;
   public timeSYN: number;
   public timeSYNACK: number;
+  public eventList: any [] = [];
 
   constructor(public id: number, public src: Host, public destIP: string, public data: number, public time: number) {
     this.flowId = id;
@@ -45,7 +46,7 @@ export class Flow {
     while (data > 0) {
       let pktSize = Math.min(data, PAYLOAD_SIZE);
 
-      this.packetList.push(new Packet(this.flowId, src.getIp(), destIP + "/24", PacketType.Payload, seqNum, HEADER_SIZE + pkt_size))
+      this.packetList.push(new Packet(this.flowId, src.getIp(), destIP + "/24", PacketType.Payload, seqNum, HEADER_SIZE + pktSize))
       seqNum++;
       data = data - pktSize;
     }
@@ -120,8 +121,8 @@ export class Flow {
     for (let i = this.toSend; i < stop && i < this.packetList.length; i++) {
       let pkt = this.packetList[this.toSend];
 
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
+      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
 
       this.toSend++;
     }
@@ -135,8 +136,8 @@ export class Flow {
 
     for (; i < stop && i < this.packetList.length; i++) {
       let pkt = this.packetList[this.toSend];
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
+      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
       this.toSend++;
     }
   }
@@ -144,8 +145,12 @@ export class Flow {
   private timeOut(pkt: Packet): void {
     if (pkt.sequenceNumber > this.windowStart) {
       // Meaning this packet has not been ack'ed yet
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
+//      for (var i = 0; i < this.eventList.length; i++) {
+//        clearTimeout(this.eventList[i]);
+//      }
+//      this.eventList.length = 0;
+      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
       this.cwnd = 1; // According to Page 7, https://tools.ietf.org/html/rfc5681#section-3.1
       let flightSize = this.toSend - this.windowStart;
 

@@ -73,6 +73,8 @@ export class Host extends Device {
   }
 
   public receivePacket(packet: Packet, link: Link): void {
+    if (packet.type === PacketType.Payload) {
+    }    
     if (packet.dstIp !== this.getIp()) {
       return;
     }
@@ -100,6 +102,7 @@ export class Host extends Device {
       let flows = this.receiveList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
+
         flow.onReceive(packet);
         let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
         setTimeout(()=>this.sendPacket(pkt));
@@ -120,8 +123,9 @@ export class Host extends Device {
   }
 
   public sendPacket(packet: Packet): void {
+    if (packet.type === PacketType.Payload) {
+    }
     let gateway = this.interfaces[0];
-
     if (gateway) {
       gateway.link.sendPacketFrom(this, packet);
     } else {
@@ -434,8 +438,7 @@ export class Link {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
       if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
-
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
         return;
       }
 
@@ -449,8 +452,7 @@ export class Link {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
       if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
-
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
         return;
       }
 
@@ -479,6 +481,10 @@ export class Link {
 
     packet.markSent();
 
+    setTimeout(()=> {
+      this.sendFromSrcBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     if (Math.random() * 100 < this.lossRate) {
       this.srcLostPktCounter++;
       console.log(`Packet lost at ${this.id}`);
@@ -487,10 +493,6 @@ export class Link {
     }
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
-
-    setTimeout(()=> {
-      this.sendFromSrcBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -519,6 +521,10 @@ export class Link {
 
     packet.markSent();
 
+    setTimeout(()=>{
+      this.sendFromDstBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     if (Math.random() * 100 < this.lossRate) {
       this.dstLostPktCounter++;
       console.log(`Packet lost at ${this.id}`);
@@ -527,10 +533,6 @@ export class Link {
     }
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
-
-    setTimeout(()=>{
-      this.sendFromDstBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
