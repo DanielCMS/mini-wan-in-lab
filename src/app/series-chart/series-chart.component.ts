@@ -21,6 +21,22 @@ function getMaxValue(multiData: SeriesPoint[][]): number {
     return max;
 }
 
+function getMinTime(multiData: SeriesPoint[][]): number {
+    let min = Infinity;
+
+    for (let j = 0; j < multiData.length; j++) {
+        let data = multiData[j];
+
+        for (let i = 0; i < data.length; i++) {
+            if (isFinite(data[i].time) && data[i].time < min) {
+                min = data[i].time;
+            }
+        }
+    }
+
+    return min;
+}
+
 function getNextTwoPower(value: number): number {
     if (value <= 0 || !isFinite(value)) {
         return 1;
@@ -86,6 +102,8 @@ export class SeriesChartComponent implements OnInit {
     let data = MOCK;
     let dataMax;
     let currentTime = Date.now();
+    let startingTime = Math.max(getMinTime(data), currentTime - INTERVAL);
+    let endingTime = startingTime + INTERVAL;
     let svg = d3.select(`#${this.id}`);
 
     if (!data) {
@@ -98,7 +116,7 @@ export class SeriesChartComponent implements OnInit {
       .domain([0, INTERVAL])
       .range([0, this.xAxisLength]);
     let computeX = d3.scaleTime()
-      .domain([new Date(currentTime - INTERVAL), new Date(currentTime)])
+      .domain([new Date(startingTime), new Date(endingTime)])
       .range([0, this.xAxisLength]);
     let computeY = d3.scaleLinear()
       .domain([0, getNextTwoPower(dataMax)])
