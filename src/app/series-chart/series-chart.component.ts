@@ -1,17 +1,59 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { SeriesPoint } from '../series-point';
 import { v1 } from 'uuid';
 import * as d3 from 'd3';
 
+function getMaxValue(multiData: SeriesPoint[][]): number {
+    let max = -Infinity;
+
+    for (let j = 0; j < multiData.length; j++) {
+        let data = multiData[j];
+
+        if (data) {
+            for (let i = 0; i < data.length; i++) {
+                if (isFinite(data[i].value) && data[i].value > max) {
+                    max = data[i].value;
+                }
+            }
+        }
+    }
+
+    return max;
+}
+
+function getNextTwoPower(value: number): number {
+    if (value <= 0 || !isFinite(value)) {
+        return 1;
+    }
+
+    let p = 1;
+
+    while (p <= value) {
+        p = p * 2;
+    }
+
+    return p;
+}
+
 const now = Date.now();
 const MOCK = [[{
-  time: now, value: 5
+  time: now + 1000, value: 5
 }, {
-  time: now + 1, value: 10
+  time: now + 5000, value: 10
+}], [{
+  time: now + 1000, value: 25
+}, {
+  time: now + 5000, value: 5
+
 }]];
 
-const INERVAL = 10000;
+const INTERVAL = 100000; // 100s
 const ANIMATION_DURATION = 300;
-const INTERVAL_TO_SHOW = 100; // s
+const X_TICKS = 5;
+const Y_TICKS = 4;
+const Y_LABEL_MARGIN = 25;
+const LINE_COLORS = ["#00B4DC", "#CC0000"];
+const STROKE_WIDTH = 2;
 
 @Component({
   selector: 'app-series-chart',
@@ -21,11 +63,23 @@ const INTERVAL_TO_SHOW = 100; // s
 export class SeriesChartComponent implements OnInit {
 
   private id: string;
+  @Input() data: SeriesPoint[][];
+  @Input() xAxisWidth: number;
+  @Input() yAxisLength: number;
 
-  constructor() { }
+  private xAxisLength: number;
+  private Y_LABEL_MARGIN: number = Y_LABEL_MARGIN;
+
+  constructor() {
+    // The prefix is needed to make it a valid id
+    this.id = `id-${v1()}`;
+  }
 
   ngOnInit() {
-    this.id = v1();
+    this.xAxisLength = this.xAxisWidth - Y_LABEL_MARGIN;
+    setTimeout(() => {
+      this.draw();
+    });
   }
 
   private draw(): void {
@@ -34,39 +88,38 @@ export class SeriesChartComponent implements OnInit {
     let currentTime = Date.now();
     let svg = d3.select(`#${this.id}`);
 
-    if (isNone(data)) {
+    if (!data) {
       return;
     } else {
-      for (let i = 0; i < data.length; i++) {
-        if (isNone(data[i])) {
-          return;
-        }
-      }
-
       dataMax = getMaxValue(data);
     }
 
-    let computeXaxis = d3.scale.linear()
+    let computeXaxis = d3.scaleLinear()
       .domain([0, INTERVAL])
       .range([0, this.xAxisLength]);
-    let computeX = d3.time.scale()
-      .domain([new Date(currentTime - this.get("timeSpan")), new Date(currentTime)])
-      .range([0, this.get("xAxisLength")]);
-    let computeY = d3.scale.linear()
-      .domain([0, getNextTwoPower(yMin > dataMax ? yMin : dataMax)])
-      .range([this.get("yAxisLength"), 0]);
-    let xAxis = d3.svg.axis()
+    let computeX = d3.scaleTime()
+      .domain([new Date(currentTime - INTERVAL), new Date(currentTime)])
+      .range([0, this.xAxisLength]);
+    let computeY = d3.scaleLinear()
+      .domain([0, getNextTwoPower(dataMax)])
+      .range([this.yAxisLength, 0]);
+    let xAxis = d3.axisBottom()
       .scale(computeXaxis)
-      .orient("bottom")
-      .ticks(this.get("xTicks"))
-      .tickFormat(d => d + this.get("xLabelSuffix"));
-    let yAxis = d3.svg.axis()
+      .ticks(X_TICKS)
+      .tickFormat(d3.timeFormat("%M:%S"));
+    let yAxis = d3.axisLeft()
       .scale(computeY)
-      .orient("left")
-      .ticks(this.get("yTicks"))
-      .tickFormat(d => this.setYFormat(d));
+      .ticks(Y_TICKS)
+      .tickFormat(d => d3.format(".2s")(d));
 
-    if (svg.select(".axis.x").selectAll(".x-axis")[0].length < 1) {
+    let existingXAxis = svg.select(".axis.x").selectAll(".x-axis")["_groups"][0];
+    let existingYAxis = svg.select(".axis.y").selectAll(".y-axis")["_groups"][0];
+
+    if (!existingXAxis || !existingYAxis) {
+      return;
+    }
+
+    if (existingXAxis.length < 1) {
       svg.select(".axis.x")
         .append("g")
         .attr("class", "x-axis axis-style")
@@ -78,7 +131,7 @@ export class SeriesChartComponent implements OnInit {
         .call(xAxis);
     }
 
-    if (svg.select(".axis.y").selectAll(".y-axis")[0].length < 1) {
+    if (existingYAxis.length < 1) {
       svg.select(".axis.y")
         .append("g")
         .attr("class", "y-axis axis-style")
@@ -89,11 +142,13 @@ export class SeriesChartComponent implements OnInit {
         .transition().duration(ANIMATION_DURATION).ease("sin")
         .call(yAxis);
     }
-    let lineFunction = d3.svg.line().interpolate("basis")
+
+    let lineFunction = d3.line()
+      .curve(d3.curveCardinal)
       .defined(d => !isNaN(d.value))
       .x(d => computeX(d.time))
       .y(d => computeY(d.value));
-    let lineColors = this.get("lineColors");
+    let lineColors = LINE_COLORS;
     let computeColor = index => lineColors[index];
     let drawnLines = svg.select(".lines").selectAll("path.line").data(data);
 
@@ -108,5 +163,4 @@ export class SeriesChartComponent implements OnInit {
         .attr("d", (d, i) => lineFunction(data[i]));
     drawnLines.exit().remove();
   }
-
 }

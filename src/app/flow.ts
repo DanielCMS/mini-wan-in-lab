@@ -45,7 +45,7 @@ export class Flow {
     while (data > 0) {
       let pktSize = Math.min(data, PAYLOAD_SIZE);
 
-      this.packetList.push(new Packet(this.flowId, src.getIp(), destIP + "/24", PacketType.Payload, seqNum, HEADER_SIZE + pkt_size))
+      this.packetList.push(new Packet(this.flowId, src.getIp(), destIP + "/24", PacketType.Payload, seqNum, HEADER_SIZE + pktSize))
       seqNum++;
       data = data - pktSize;
     }
