@@ -14,6 +14,7 @@ import { ControlsComponent } from './controls/controls.component';
 import { NetworkStructureComponent } from './network-structure/network-structure.component';
 import { PanelsComponent } from './panels/panels.component';
 import { InputComponent } from './input/input.component';
+import { SeriesChartComponent } from './series-chart/series-chart.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { InputComponent } from './input/input.component';
     ControlsComponent,
     NetworkStructureComponent,
     PanelsComponent,
-    InputComponent
+    InputComponent,
+    SeriesChartComponent
   ],
   imports: [
     BrowserModule,

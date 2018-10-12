@@ -82,4 +82,32 @@
     </tr>
   </table>
   <span class="title">Monitoring</span>
+  <div class="scrollable">
+    <div class="monitor-title">
+      <img src="/assets/images/throughput-icon.svg">
+      THROUGHPUT (Mbps)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+    ></app-series-chart>
+
+    <div class="monitor-title">
+      <img src="/assets/images/latency-icon.svg">
+      LATENCY (ms)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+    ></app-series-chart>
+
+    <div class="monitor-title">
+      <img src="/assets/images/packet-loss-icon.svg">
+      LOSS RATE (%)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+    ></app-series-chart>
+  </div>
 </div>

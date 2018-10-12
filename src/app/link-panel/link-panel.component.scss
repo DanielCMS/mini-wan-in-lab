@@ -90,3 +90,20 @@
     }
   }
 }
+
+.monitor-title {
+  margin-top: 5px;
+  margin-bottom: 10px;
+  @include flexbox();
+  @include align-items(center);
+
+  img {
+    margin-right: 8px;
+  }
+}
+
+.scrollable {
+  max-height: 400px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}

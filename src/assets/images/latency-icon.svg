@@ -1,0 +1,14 @@
+<svg width="22px" height="24px" viewBox="0 0 22 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="97.9611767%" id="linearGradient-1">
+            <stop stop-color="#C4C8D6" offset="0%"></stop>
+            <stop stop-color="#989CAA" offset="100%"></stop>
+        </linearGradient>
+        <rect id="path-3" x="0" y="0" width="20" height="22" rx="6"></rect>
+    </defs>
+    <g transform="translate(1, 1)" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <use fill="url(#linearGradient-1)" fill-rule="evenodd" xlink:href="#path-3"></use>
+        <rect stroke="#A5ADB7" stroke-width="1" x="-0.5" y="-0.5" width="21" height="23" rx="6"></rect>
+        <polyline id="Shape" stroke="#FDFEFE" stroke-width="2" points="3 11 6.18181818 11 8.09090909 6 11.9090909 16 13.8181818 11 17 11"></polyline>
+    </g>
+</svg>

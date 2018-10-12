@@ -1,0 +1,29 @@
+<svg [id]="id">
+  <defs>
+    <clipPath [id]="'lineClip' + id">
+      <rect [attr.width]="xAxisLength" [attr.height]="yAxisLength" x="0" y="0"></rect>
+    </clipPath>
+  </defs>
+  <g>
+    <rect
+      [attr.width]="xAxisLength"
+      [attr.height]="yAxisLength"
+      [attr.x]="Y_LABEL_MARGIN"
+      y="9"
+      fill="#F9FAFB"
+    ></rect>
+  </g>
+  <g
+    class="x axis"
+    [style.transform]="'translate(' + Y_LABEL_MARGIN + 'px, ' + yAxisLength + 'px)'"
+  ></g>
+  <g
+    class="y axis"
+    [style.transform]="'translate(' + Y_LABEL_MARGIN + 'px, 0px)'"
+  ></g>
+  <g
+    class="lines"
+    [style.transform]="'translate(' + Y_LABEL_MARGIN + 'px, 0px)'"
+    [attr.clip-path]="'url(#lineClip' + id +')'"
+  ></g>
+</svg>
