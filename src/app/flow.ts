@@ -114,8 +114,7 @@ export class Flow {
     this.slowStart();
   }
 
-  private slowStart(): void {
-    this.flowStatus = FlowStatus.SS;
+  private send(): void {
     let stop = this.windowStart + this.cwnd;
 
     for (let i = this.toSend; i < stop && i < this.packetList.length; i++) {
@@ -125,21 +124,22 @@ export class Flow {
       this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
 
       this.toSend++;
-    }
+    }    
+  }
+
+  private slowStart(): void {
+    this.flowStatus = FlowStatus.SS;
+    this.send();
   }
 
   private congestionAvoidance(): void {
     this.flowStatus = FlowStatus.CA;
+    this.send();
+  }
 
-    let i = this.toSend;
-    let stop = this.windowStart + this.cwnd;
-
-    for (; i < stop && i < this.packetList.length; i++) {
-      let pkt = this.packetList[this.toSend];
-      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
-      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
-      this.toSend++;
-    }
+  private frfr(): void {
+    this.flowStatus = FlowStatus.FRFR;
+    this.send();
   }
 
   private timeOut(pkt: Packet): void {
@@ -153,7 +153,6 @@ export class Flow {
       this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
       this.cwnd = 1; // According to Page 7, https://tools.ietf.org/html/rfc5681#section-3.1
       let flightSize = this.toSend - this.windowStart;
-
       this.ssthresh = Math.max(flightSize/2, 2);
       this.slowStart();
     } else {
@@ -174,6 +173,13 @@ export class Flow {
       this.maxAck = packet.sequenceNumber;
       this.maxAckDup = 1;
 
+      if (this.flowStatus === FlowStatus.FRFR) {
+        this.cwnd = this.ssthresh;
+        this.windowStart = packet.sequenceNumber - 1;
+        this.congestionAvoidance();
+        return;
+      }
+
       if (this.cwnd < this.ssthresh) {
         this.windowStart = packet.sequenceNumber - 1;
         this.cwnd = this.cwnd + 1;
@@ -185,8 +191,20 @@ export class Flow {
       }
     } else {
       this.maxAckDup++;
-
-
+      if (this.maxAckDup === 3) {
+        // 3 dup ACK, fast retransmit and fast recovery
+        let flightSize = this.toSend - this.windowStart;
+        this.ssthresh = Math.max(flightSize/2, 2);
+        this.cwnd = this.ssthresh + 3;
+        let pkt = this.packetList[this.maxAck - 1];
+        this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+        this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
+        this.frfr();
+      } else if (this.maxAckDup > 3) {
+        // Additional dup arrives, need to inflate cwnd artificially
+        this.cwnd++;
+        this.frfr();
+      }
     }
   }
 //-------- Above is the code for TCP Reno --------
