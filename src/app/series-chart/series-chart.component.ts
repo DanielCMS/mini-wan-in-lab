@@ -51,11 +51,12 @@ function getNextTwoPower(value: number): number {
     return p;
 }
 
-const INTERVAL = 100000; // 100s
+const INTERVAL = 90000; // 90s
 const ANIMATION_DURATION = 300;
 const X_TICKS = 5;
 const Y_TICKS = 4;
-const Y_LABEL_MARGIN = 25;
+const Y_LABEL_MARGIN = 30;
+const TOP_MARGIN = 9;
 const LINE_COLORS = ["#00B4DC", "#CC0000"];
 const STROKE_WIDTH = 2;
 
@@ -72,7 +73,9 @@ export class SeriesChartComponent implements OnInit, OnChanges {
   @Input() yAxisLength: number;
 
   private xAxisLength: number;
+  private yAxisAdjusted: number;
   private Y_LABEL_MARGIN: number = Y_LABEL_MARGIN;
+  private TOP_MARGIN: number = TOP_MARGIN;
 
   constructor() {
     // The prefix is needed to make it a valid id
@@ -81,6 +84,8 @@ export class SeriesChartComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.xAxisLength = this.xAxisWidth - Y_LABEL_MARGIN;
+    this.yAxisAdjusted = this.yAxisLength - TOP_MARGIN;
+
     setTimeout(() => {
       this.draw();
     });
@@ -117,7 +122,7 @@ export class SeriesChartComponent implements OnInit, OnChanges {
       .range([0, this.xAxisLength]);
     let computeY = d3.scaleLinear()
       .domain([0, getNextTwoPower(dataMax)])
-      .range([this.yAxisLength, 0]);
+      .range([this.yAxisAdjusted, 0]);
     let xAxis = d3.axisBottom()
       .scale(computeXaxis)
       .ticks(X_TICKS)
@@ -125,7 +130,7 @@ export class SeriesChartComponent implements OnInit, OnChanges {
     let yAxis = d3.axisLeft()
       .scale(computeY)
       .ticks(Y_TICKS)
-      .tickFormat(d => d3.format(".2s")(d));
+      .tickFormat(d => d3.format(".2")(d));
 
     let existingXAxis = svg.select(".axis.x").selectAll(".x-axis")["_groups"][0];
     let existingYAxis = svg.select(".axis.y").selectAll(".y-axis")["_groups"][0];

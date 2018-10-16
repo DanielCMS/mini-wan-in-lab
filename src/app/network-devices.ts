@@ -387,7 +387,8 @@ const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
-const MAX_STATS_LENGTH = 100;
+const MAX_STATS_LENGTH = 80;
+const AVG_LENGTH = 2;
 
 export class Link {
   public isLink: boolean = true;
@@ -396,9 +397,11 @@ export class Link {
   public lossRate: number = DEFAULT_LOSS_RATE;
   public bufferSize: number = DEFAULT_BUFFER_SIZE;
   public metric: number = DEFAULT_METRIC;
+
   public latencyStats: SeriesPoint[][] = [];
-  public lossRateStats: SeriesPoint[][] = [];
+  public packetLossStats: SeriesPoint[][] = [];
   public throughputStats: SeriesPoint[][] = [];
+  public bufferSizeStats: SeriesPoint[][] = [];
 
   private srcBuffer = new Deque();
   private dstBuffer = new Deque();
@@ -409,23 +412,31 @@ export class Link {
   private dstSending: boolean = false;
 
   private srcLatencyData: number[] = [];
+  private srcBufferData: number[] = [];
   private srcLostPktCounter: number = 0;
-  private srcSentPktCounter: number = 0;
   private srcThroughputCounter: number = 0;
 
+  private srcLatencyRaw: number[] = [];
   private srcLatencyStats: SeriesPoint[] = [];
-  private srcLossRateStats: SeriesPoint[] = [];
+  private srcPacketLossStats: SeriesPoint[] = [];
+  private srcThroughputRaw: number[] = [];
   private srcThroughputStats: SeriesPoint[] = [];
+  private srcBufferSizeRaw: number[] = [];
+  private srcBufferSizeStats: SeriesPoint[] = [];
   private srcLastUpdated: number;
 
   private dstLatencyData: number[] = [];
+  private dstBufferData: number[] = [];
   private dstLostPktCounter: number = 0;
-  private dstSentPktCounter: number = 0;
   private dstThroughputCounter: number = 0;
 
+  private dstLatencyRaw: number[] = [];
   private dstLatencyStats: SeriesPoint[] = [];
-  private dstLossRateStats: SeriesPoint[] = [];
+  private dstPacketLossStats: SeriesPoint[] = [];
+  private dstThroughputRaw: number[] = [];
   private dstThroughputStats: SeriesPoint[] = [];
+  private dstBufferSizeRaw: number[] = [];
+  private dstBufferSizeStats: SeriesPoint[] = [];
   private dstLastUpdated: number;
 
   private srcTransTimer: number;
@@ -465,13 +476,14 @@ export class Link {
     if (source === this.src) {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
-      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
+      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB && source instanceof Router) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
 
         return;
       }
 
       this.srcBuffer.push(packet);
+      this.srcBufferData.push(newSrcBufferSize);
       this.srcBufferUsed = newSrcBufferSize;
 
       if (!this.srcSending) {
@@ -480,13 +492,14 @@ export class Link {
     } else {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
-      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
+      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB && source instanceof Router) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
 
         return;
       }
 
       this.dstBuffer.push(packet);
+      this.srcBufferData.push(newDstBufferSize);
       this.dstBufferUsed = newDstBufferSize;
 
       if (!this.dstSending) {
@@ -498,15 +511,32 @@ export class Link {
   private notifyStatsUpdate(): void {
     this.latencyStats = [this.srcLatencyStats, this.dstLatencyStats];
     this.throughputStats = [this.srcThroughputStats, this.dstThroughputStats];
-    this.lossRateStats = [this.srcLossRateStats, this.dstLossRateStats];
+    this.packetLossStats = [this.srcPacketLossStats, this.dstPacketLossStats];
+    this.bufferSizeStats = [this.srcBufferSizeStats, this.dstBufferSizeStats];
+  }
 
-    console.log(this.latencyStats);
+  private pushRawAndGetAvg(value: number, raw: number[]): number {
+    raw.push(value);
+
+    if (raw.length > AVG_LENGTH) {
+      raw.shift();
+    }
+
+    return raw.reduce((last, next) => last + next, 0) / Math.max(raw.length, 1);
   }
 
   private updateSrcStats(): void {
     let now = Date.now();
+
+    // Update latency
     let latencyAvg = this.srcLatencyData
-      .reduce((last, next) => last + next, 0) / Math.max(this.srcLatencyData.length, 1);
+      .reduce((last, next) => last + next, 0) / this.srcLatencyData.length / TIME_SLOWDOWN;
+
+    if (isNaN(latencyAvg)) {
+      latencyAvg = this.delay;
+    }
+
+    latencyAvg = this.pushRawAndGetAvg(latencyAvg, this.srcLatencyRaw);
 
     this.srcLatencyStats.push({
       time: now,
@@ -519,21 +549,42 @@ export class Link {
 
     this.srcLatencyData = [];
 
-    this.srcLossRateStats.push({
+    // Update buffer size
+    let bufferAvg = this.srcBufferData
+      .reduce((last, next) => last + next, 0) / Math.max(this.srcBufferData.length, 1) / BYTES_IN_KB;
+
+    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.srcBufferSizeRaw);
+
+    this.srcBufferSizeStats.push({
       time: now,
-      value: this.srcLostPktCounter / Math.max(this.srcSentPktCounter, 1) * 100
+      value: bufferAvg
     });
 
-    if (this.srcLossRateStats.length > MAX_STATS_LENGTH) {
-      this.srcLossRateStats.shift();
+    this.srcBufferData = [];
+
+    if (this.srcBufferSizeStats.length > MAX_STATS_LENGTH) {
+      this.srcBufferSizeStats.shift();
+    }
+
+    // Update pakcet loss
+    this.srcPacketLossStats.push({
+      time: now,
+      value: this.srcLostPktCounter
+    });
+
+    if (this.srcPacketLossStats.length > MAX_STATS_LENGTH) {
+      this.srcPacketLossStats.shift()
     }
 
     this.srcLostPktCounter = 0;
-    this.srcSentPktCounter = 0;
+
+    // Update throughput
+    let throughput = this.srcThroughputCounter / (now - this.srcLastUpdated) / TIME_SLOWDOWN;
+    let avg = this.pushRawAndGetAvg(throughput, this.srcThroughputRaw);
 
     this.srcThroughputStats.push({
       time: now,
-      value: this.srcThroughputCounter / (now - this.srcLastUpdated)
+      value: avg
     });
 
     if (this.srcThroughputStats.length > MAX_STATS_LENGTH) {
@@ -543,17 +594,27 @@ export class Link {
     this.srcLastUpdated = now;
     this.srcThroughputCounter = 0;
 
+    // Schedule a future updates
     this.srcStatsTimer = setTimeout(() => {
       this.updateSrcStats();
     }, STATS_UPDATE_INTERVAL);
 
+    // Notify a redraw
     this.notifyStatsUpdate();
   }
 
   private updateDstStats(): void {
     let now = Date.now();
+
+    // Update latency
     let latencyAvg = this.dstLatencyData
-      .reduce((last, next) => last + next, 0) / Math.max(this.dstLatencyData.length, 1);
+      .reduce((last, next) => last + next, 0) / this.dstLatencyData.length / TIME_SLOWDOWN;
+
+    if (isNaN(latencyAvg)) {
+      latencyAvg = this.delay;
+    }
+
+    latencyAvg = this.pushRawAndGetAvg(latencyAvg, this.dstLatencyRaw);
 
     this.dstLatencyStats.push({
       time: now,
@@ -566,21 +627,42 @@ export class Link {
 
     this.dstLatencyData = [];
 
-    this.dstLossRateStats.push({
+    // Update buffer size
+    let bufferAvg = this.dstBufferData
+      .reduce((last, next) => last + next, 0) / Math.max(this.dstBufferData.length, 1) / BYTES_IN_KB;
+
+    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.dstBufferSizeRaw);
+
+    this.dstBufferSizeStats.push({
       time: now,
-      value: this.dstLostPktCounter / Math.max(this.dstSentPktCounter, 1) * 100
+      value: bufferAvg
     });
 
-    if (this.dstLossRateStats.length > MAX_STATS_LENGTH) {
-      this.dstLossRateStats.shift();
+    this.dstBufferData = [];
+
+    if (this.dstBufferSizeStats.length > MAX_STATS_LENGTH) {
+      this.dstBufferSizeStats.shift();
+    }
+
+    // Update pakcet loss
+    this.dstPacketLossStats.push({
+      time: now,
+      value: this.dstLostPktCounter
+    });
+
+    if (this.dstPacketLossStats.length > MAX_STATS_LENGTH) {
+      this.dstPacketLossStats.shift();
     }
 
     this.dstLostPktCounter = 0;
-    this.dstSentPktCounter = 0;
+
+    // Update throughput
+    let throughput = this.dstThroughputCounter / (now - this.dstLastUpdated) / TIME_SLOWDOWN;
+    let avg = this.pushRawAndGetAvg(throughput, this.dstThroughputRaw);
 
     this.dstThroughputStats.push({
       time: now,
-      value: this.dstThroughputCounter / (now - this.dstLastUpdated)
+      value: avg
     });
 
     if (this.dstThroughputStats.length > MAX_STATS_LENGTH) {
@@ -590,10 +672,12 @@ export class Link {
     this.dstLastUpdated = now;
     this.dstThroughputCounter = 0;
 
+    // Schedule a future updates
     this.dstStatsTimer = setTimeout(() => {
       this.updateDstStats();
     }, STATS_UPDATE_INTERVAL);
 
+    // Notify a redraw
     this.notifyStatsUpdate();
   }
 
@@ -609,8 +693,6 @@ export class Link {
     let packet = <Packet>this.srcBuffer.shift();
 
     this.srcBufferUsed = this.srcBufferUsed - packet.size;
-    this.srcSentPktCounter++;
-
     packet.markSent();
 
     this.srcNextTimer = setTimeout(() => {
@@ -649,8 +731,6 @@ export class Link {
     let packet = <Packet>this.dstBuffer.shift();
 
     this.dstBufferUsed = this.dstBufferUsed - packet.size;
-    this.dstSentPktCounter++;
-
     packet.markSent();
 
     this.dstNextTimer = setTimeout(()=>{
