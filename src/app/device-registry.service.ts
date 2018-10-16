@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Vector } from './vector';
 import { Host, Router, Link, Device } from './network-devices';
-import { v1 } from 'uuid';
+import { v4 } from 'uuid';
 import { PanelRegistry } from './panel-registry.service';
 import { FeedbackService } from './feedback.service';
 
@@ -30,7 +30,7 @@ export class DeviceRegistry {
   }
 
   public addRouter(position: Vector): void {
-    let id = v1();
+    let id = v4();
     let label = `Router ${this.routerLabelCounter}`;
     let newRouter = new Router(id, label, position);
 
@@ -41,7 +41,7 @@ export class DeviceRegistry {
   }
 
   public addHost(position: Vector): void {
-    let id = v1();
+    let id = v4();
     let label = `Host ${this.hostLabelCounter}`;
     let newHost = new Host(id, label, position);
 
@@ -82,7 +82,7 @@ export class DeviceRegistry {
       return;
     }
 
-    let id = v1();
+    let id = v4();
     let newLink = new Link(id, src, dst);
 
     this.linkList.push(newLink);

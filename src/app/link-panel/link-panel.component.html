@@ -90,6 +90,7 @@
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.throughputStats"
     ></app-series-chart>
 
     <div class="monitor-title">
@@ -99,6 +100,7 @@
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.latencyStats"
     ></app-series-chart>
 
     <div class="monitor-title">
@@ -108,6 +110,7 @@
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.lossRateStats"
     ></app-series-chart>
   </div>
 </div>

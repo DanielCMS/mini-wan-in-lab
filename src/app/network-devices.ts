@@ -5,7 +5,8 @@ import * as Deque from 'double-ended-queue';
 import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE,
   HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
   BETA, IPv4, MEGA } from './constants';
-import { v1 } from 'uuid';
+import { v4 } from 'uuid';
+import { SeriesPoint } from './series-point';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -56,7 +57,7 @@ export class Host extends Device {
 
   addNewFlow(dest: string, data: number, startTime: number): void {
     if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      let id = v1();
+      let id = v4();
       this.flowList.push(new Flow(id, this, dest, data, startTime));
     } else{
       this.hasInvalidFormat = true;
@@ -209,7 +210,7 @@ export class Router extends Device {
     this.cachedBroadcastPkt.push(packet);
 
     setTimeout(() => {
-      this.cachedBroadcastPkt.filter(_pkt => _pkt !== packet);
+      this.cachedBroadcastPkt = this.cachedBroadcastPkt.filter(_pkt => _pkt !== packet);
     }, BROADCAST_CACHE_INTERVAL);
 
     for (let intf of this.interfaces) {
@@ -385,6 +386,8 @@ const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
+const STATS_UPDATE_INTERVAL = 1000; // 1s
+const MAX_STATS_LENGTH = 100;
 
 export class Link {
   public isLink: boolean = true;
@@ -393,6 +396,9 @@ export class Link {
   public lossRate: number = DEFAULT_LOSS_RATE;
   public bufferSize: number = DEFAULT_BUFFER_SIZE;
   public metric: number = DEFAULT_METRIC;
+  public latencyStats: SeriesPoint[][] = [];
+  public lossRateStats: SeriesPoint[][] = [];
+  public throughputStats: SeriesPoint[][] = [];
 
   private srcBuffer = new Deque();
   private dstBuffer = new Deque();
@@ -407,15 +413,36 @@ export class Link {
   private srcSentPktCounter: number = 0;
   private srcThroughputCounter: number = 0;
 
+  private srcLatencyStats: SeriesPoint[] = [];
+  private srcLossRateStats: SeriesPoint[] = [];
+  private srcThroughputStats: SeriesPoint[] = [];
+  private srcLastUpdated: number;
+
   private dstLatencyData: number[] = [];
   private dstLostPktCounter: number = 0;
   private dstSentPktCounter: number = 0;
   private dstThroughputCounter: number = 0;
 
+  private dstLatencyStats: SeriesPoint[] = [];
+  private dstLossRateStats: SeriesPoint[] = [];
+  private dstThroughputStats: SeriesPoint[] = [];
+  private dstLastUpdated: number;
+
   private srcTransTimer: number;
   private dstTransTimer: number;
+  private srcNextTimer: number;
+  private dstNextTimer: number;
+  private srcStatsTimer: number;
+  private dstStatsTimer: number;
 
   constructor(public id: string, public src: Device, public dst: Device) {
+    let now = Date.now();
+
+    this.srcLastUpdated = now;
+    this.dstLastUpdated = now;
+
+    this.updateSrcStats();
+    this.updateDstStats();
   }
 
   public getOtherEnd(element: Device): Device {
@@ -440,6 +467,7 @@ export class Link {
 
       if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
         return;
       }
 
@@ -454,6 +482,7 @@ export class Link {
 
       if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
         return;
       }
 
@@ -464,6 +493,108 @@ export class Link {
         this.sendFromDstBuffer();
       }
     }
+  }
+
+  private notifyStatsUpdate(): void {
+    this.latencyStats = [this.srcLatencyStats, this.dstLatencyStats];
+    this.throughputStats = [this.srcThroughputStats, this.dstThroughputStats];
+    this.lossRateStats = [this.srcLossRateStats, this.dstLossRateStats];
+
+    console.log(this.latencyStats);
+  }
+
+  private updateSrcStats(): void {
+    let now = Date.now();
+    let latencyAvg = this.srcLatencyData
+      .reduce((last, next) => last + next, 0) / Math.max(this.srcLatencyData.length, 1);
+
+    this.srcLatencyStats.push({
+      time: now,
+      value: latencyAvg
+    });
+
+    if (this.srcLatencyStats.length > MAX_STATS_LENGTH) {
+      this.srcLatencyStats.shift();
+    }
+
+    this.srcLatencyData = [];
+
+    this.srcLossRateStats.push({
+      time: now,
+      value: this.srcLostPktCounter / Math.max(this.srcSentPktCounter, 1) * 100
+    });
+
+    if (this.srcLossRateStats.length > MAX_STATS_LENGTH) {
+      this.srcLossRateStats.shift();
+    }
+
+    this.srcLostPktCounter = 0;
+    this.srcSentPktCounter = 0;
+
+    this.srcThroughputStats.push({
+      time: now,
+      value: this.srcThroughputCounter / (now - this.srcLastUpdated)
+    });
+
+    if (this.srcThroughputStats.length > MAX_STATS_LENGTH) {
+      this.srcThroughputStats.shift();
+    }
+
+    this.srcLastUpdated = now;
+    this.srcThroughputCounter = 0;
+
+    this.srcStatsTimer = setTimeout(() => {
+      this.updateSrcStats();
+    }, STATS_UPDATE_INTERVAL);
+
+    this.notifyStatsUpdate();
+  }
+
+  private updateDstStats(): void {
+    let now = Date.now();
+    let latencyAvg = this.dstLatencyData
+      .reduce((last, next) => last + next, 0) / Math.max(this.dstLatencyData.length, 1);
+
+    this.dstLatencyStats.push({
+      time: now,
+      value: latencyAvg
+    });
+
+    if (this.dstLatencyStats.length > MAX_STATS_LENGTH) {
+      this.dstLatencyStats.shift();
+    }
+
+    this.dstLatencyData = [];
+
+    this.dstLossRateStats.push({
+      time: now,
+      value: this.dstLostPktCounter / Math.max(this.dstSentPktCounter, 1) * 100
+    });
+
+    if (this.dstLossRateStats.length > MAX_STATS_LENGTH) {
+      this.dstLossRateStats.shift();
+    }
+
+    this.dstLostPktCounter = 0;
+    this.dstSentPktCounter = 0;
+
+    this.dstThroughputStats.push({
+      time: now,
+      value: this.dstThroughputCounter / (now - this.dstLastUpdated)
+    });
+
+    if (this.dstThroughputStats.length > MAX_STATS_LENGTH) {
+      this.dstThroughputStats.shift();
+    }
+
+    this.dstLastUpdated = now;
+    this.dstThroughputCounter = 0;
+
+    this.dstStatsTimer = setTimeout(() => {
+      this.updateDstStats();
+    }, STATS_UPDATE_INTERVAL);
+
+    this.notifyStatsUpdate();
   }
 
   private sendFromSrcBuffer(): void {
@@ -482,7 +613,7 @@ export class Link {
 
     packet.markSent();
 
-    setTimeout(()=> {
+    this.srcNextTimer = setTimeout(() => {
       this.sendFromSrcBuffer();
     }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
@@ -522,7 +653,7 @@ export class Link {
 
     packet.markSent();
 
-    setTimeout(()=>{
+    this.dstNextTimer = setTimeout(()=>{
       this.sendFromDstBuffer();
     }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
@@ -551,6 +682,10 @@ export class Link {
     // Stop ongoing transmission
     clearTimeout(this.srcTransTimer);
     clearTimeout(this.dstTransTimer);
+    clearTimeout(this.srcNextTimer);
+    clearTimeout(this.dstNextTimer);
+    clearTimeout(this.srcStatsTimer);
+    clearTimeout(this.dstStatsTimer);
   }
 
   public updateMetric(metric: number): void {
