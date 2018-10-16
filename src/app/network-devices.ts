@@ -74,6 +74,8 @@ export class Host extends Device {
   }
 
   public receivePacket(packet: Packet, link: Link): void {
+    if (packet.type === PacketType.Payload) {
+    }    
     if (packet.dstIp !== this.getIp()) {
       return;
     }
@@ -101,6 +103,7 @@ export class Host extends Device {
       let flows = this.receiveList.filter(r => r.flowId === flowId);
       if (flows.length > 0) {
         let flow = flows[0];
+
         flow.onReceive(packet);
         let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
         setTimeout(()=>this.sendPacket(pkt));
@@ -121,8 +124,9 @@ export class Host extends Device {
   }
 
   public sendPacket(packet: Packet): void {
+    if (packet.type === PacketType.Payload) {
+    }
     let gateway = this.interfaces[0];
-
     if (gateway) {
       gateway.link.sendPacketFrom(this, packet);
     } else {
@@ -435,8 +439,7 @@ export class Link {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
       if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
-
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
         return;
       }
 
@@ -450,8 +453,7 @@ export class Link {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
       if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
-        console.log(`Dropping packets at ${this.id} due to buffer overflow.`, packet.sequenceNumber);
-
+        console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
         return;
       }
 
@@ -480,6 +482,10 @@ export class Link {
 
     packet.markSent();
 
+    setTimeout(()=> {
+      this.sendFromSrcBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     if (Math.random() * 100 < this.lossRate) {
       this.srcLostPktCounter++;
       console.log(`Packet lost at ${this.id}`);
@@ -488,10 +494,6 @@ export class Link {
     }
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
-
-    setTimeout(()=> {
-      this.sendFromSrcBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -520,6 +522,10 @@ export class Link {
 
     packet.markSent();
 
+    setTimeout(()=>{
+      this.sendFromDstBuffer();
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+
     if (Math.random() * 100 < this.lossRate) {
       this.dstLostPktCounter++;
       console.log(`Packet lost at ${this.id}`);
@@ -528,10 +534,6 @@ export class Link {
     }
 
     let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
-
-    setTimeout(()=>{
-      this.sendFromDstBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
 
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -633,6 +635,7 @@ export class Flow {
   public maxAckDup: number = 0;
   public timeSYN: number;
   public timeSYNACK: number;
+  public eventList: any [] = [];
 
   constructor(public id: number, public src: Host, public destIP: string, public data: number, public time: number) {
     this.flowId = id;
@@ -689,7 +692,6 @@ export class Flow {
         case AlgType.Reno:
           this.sendPackets_Reno();
           break;
-
         case AlgType.Vegas:
           break;
         default:
@@ -721,43 +723,45 @@ export class Flow {
     this.slowStart();
   }
 
-
-  private slowStart(): void {
-    this.flowStatus = FlowStatus.SS;
+  private send(): void {
     let stop = this.windowStart + this.cwnd;
 
     for (let i = this.toSend; i < stop && i < this.packetList.length; i++) {
       let pkt = this.packetList[this.toSend];
 
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
+      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
 
       this.toSend++;
     }
   }
 
+  private slowStart(): void {
+    this.flowStatus = FlowStatus.SS;
+    this.send();
+  }
+
   private congestionAvoidance(): void {
     this.flowStatus = FlowStatus.CA;
+    this.send();
+  }
 
-    let i = this.toSend;
-    let stop = this.windowStart + this.cwnd;
-
-    for (; i < stop && i < this.packetList.length; i++) {
-      let pkt = this.packetList[this.toSend];
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
-      this.toSend++;
-    }
+  private frfr(): void {
+    this.flowStatus = FlowStatus.FRFR;
+    this.send();
   }
 
   private timeOut(pkt: Packet): void {
     if (pkt.sequenceNumber > this.windowStart) {
       // Meaning this packet has not been ack'ed yet
-      setTimeout(() => this.sendingHost.sendPacket(pkt));
-      setTimeout(() => this.timeOut(pkt), this.RTO);
+//      for (var i = 0; i < this.eventList.length; i++) {
+//        clearTimeout(this.eventList[i]);
+//      }
+//      this.eventList.length = 0;
+      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
       this.cwnd = 1; // According to Page 7, https://tools.ietf.org/html/rfc5681#section-3.1
       let flightSize = this.toSend - this.windowStart;
-
       this.ssthresh = Math.max(flightSize/2, 2);
       this.slowStart();
     } else {
@@ -778,6 +782,13 @@ export class Flow {
       this.maxAck = packet.sequenceNumber;
       this.maxAckDup = 1;
 
+      if (this.flowStatus === FlowStatus.FRFR) {
+        this.cwnd = this.ssthresh;
+        this.windowStart = packet.sequenceNumber - 1;
+        this.congestionAvoidance();
+        return;
+      }
+
       if (this.cwnd < this.ssthresh) {
         this.windowStart = packet.sequenceNumber - 1;
         this.cwnd = this.cwnd + 1;
@@ -789,8 +800,20 @@ export class Flow {
       }
     } else {
       this.maxAckDup++;
-
-
+      if (this.maxAckDup === 3) {
+        // 3 dup ACK, fast retransmit and fast recovery
+        let flightSize = this.toSend - this.windowStart;
+        this.ssthresh = Math.max(flightSize/2, 2);
+        this.cwnd = this.ssthresh + 3;
+        let pkt = this.packetList[this.maxAck - 1];
+        this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
+        this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
+        this.frfr();
+      } else if (this.maxAckDup > 3) {
+        // Additional dup arrives, need to inflate cwnd artificially
+        this.cwnd++;
+        this.frfr();
+      }
     }
   }
 //-------- Above is the code for TCP Reno --------
