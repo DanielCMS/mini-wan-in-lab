@@ -387,14 +387,14 @@ export class Router extends Device {
 
 const DEFAULT_CAP = 10;
 const DEFAULT_DELAY = 10;
-const DEFAULT_LOSS_RATE = 0;
+const DEFAULT_LOSS_RATE = 0.1;
 const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
 const MAX_STATS_LENGTH = 80;
-const AVG_LENGTH = 0.25 * TIME_SLOWDOWN;
+const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
 
 export class Link {
   public isLink: boolean = true;
@@ -984,7 +984,14 @@ export class Flow {
     let packet = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Payload, this.seqNum, HEADER_SIZE + pktSize)
 
     this.seqNum++;
-    this.dataRemaining = this.dataRemaining - pktSize;
+
+    let lastOnFlight = this.packetsOnFly.slice(-1)[0];
+
+    if (lastOnFlight && this.seqNum < lastOnFlight.sequenceNumber) {
+      console.log("Retransmitting on flight packet");
+    } else {
+      this.dataRemaining = this.dataRemaining - pktSize;
+    }
 
     return packet;
   }
@@ -1014,6 +1021,9 @@ export class Flow {
 
     this.cwnd = 1;
     this.flowStatus = FlowStatus.SS;
+    this.seqNum = this.maxAck;
+
+    this.send();
   }
 }
 
@@ -1038,7 +1048,7 @@ export class Tahoe implements CongestionControlAlg {
 
     if (flow.maxAckDup === 3) {
       flow.cwnd = 1;
-      flow.flowStatus = FlowStatus.CA;
+      flow.flowStatus = FlowStatus.SS;
     }
   }
 }

@@ -13,4 +13,4 @@ export const SSTHRESH_INIT = Number.MAX_VALUE;
 export const ALPHA = 0.125;
 export const BETA = 2; // RTO = BETA * RTT
 export const MEGA = 1024 * 1024; // 1 MB = 1024 * 1024 Byte
-export const MIN_RTO = 0 * TIME_SLOWDOWN;
+export const MIN_RTO = 30 * TIME_SLOWDOWN; // 1s lower bound
