@@ -886,7 +886,7 @@ export class Flow {
 
   private updateRTT(RTT: number): void {
     if (this.RTT) {
-      this.RTT = (1 - ALPHA) * this.RTT + ALPHA * this.RTT;
+      this.RTT = (1 - ALPHA) * this.RTT + ALPHA * RTT;
     } else {
       this.RTT = RTT;
     }
@@ -941,7 +941,9 @@ export class Flow {
   private retransmit(): void {
     let pkt = this.packetsOnFly[0];
 
-    setTimeout(() => this.sendingHost.sendPacket(pkt));
+    if (pkt) {
+      setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
+    }
   }
 
   private onReceiveNewAck(): void {
@@ -984,10 +986,10 @@ export class Flow {
   private send(): void {
     let stop = this.windowStart + this.cwnd;
 
-    for (let i = 0; this.seqNum < stop; i++) {
+    while (this.seqNum < stop) {
       let pkt = this.createPacket();
 
-      if (pkt instanceof Packet) {
+      if (pkt) {
         setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
         this.packetsOnFly.push(pkt);
       } else {
