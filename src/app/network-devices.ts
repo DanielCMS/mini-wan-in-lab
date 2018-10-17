@@ -387,14 +387,14 @@ export class Router extends Device {
 
 const DEFAULT_CAP = 10;
 const DEFAULT_DELAY = 10;
-const DEFAULT_LOSS_RATE = 0.1;
+const DEFAULT_LOSS_RATE = 0;
 const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
 const MAX_STATS_LENGTH = 80;
-const AVG_LENGTH = 2;
+const AVG_LENGTH = 0.25 * TIME_SLOWDOWN;
 
 export class Link {
   public isLink: boolean = true;
@@ -585,7 +585,7 @@ export class Link {
     this.srcLostPktCounter = 0;
 
     // Update throughput
-    let throughput = this.srcThroughputCounter / (now - this.srcLastUpdated) / TIME_SLOWDOWN;
+    let throughput = this.srcThroughputCounter / (now - this.srcLastUpdated) * TIME_SLOWDOWN / 125;
     let avg = this.pushRawAndGetAvg(throughput, this.srcThroughputRaw);
 
     this.srcThroughputStats.push({
@@ -663,7 +663,7 @@ export class Link {
     this.dstLostPktCounter = 0;
 
     // Update throughput
-    let throughput = this.dstThroughputCounter / (now - this.dstLastUpdated) / TIME_SLOWDOWN;
+    let throughput = this.dstThroughputCounter / (now - this.dstLastUpdated) * TIME_SLOWDOWN / 125;
     let avg = this.pushRawAndGetAvg(throughput, this.dstThroughputRaw);
 
     this.dstThroughputStats.push({
@@ -703,7 +703,7 @@ export class Link {
 
     this.srcNextTimer = setTimeout(() => {
       this.sendFromSrcBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN * 1000);
 
     if (Math.random() * 100 < this.lossRate) {
       this.srcLostPktCounter++;
@@ -712,7 +712,7 @@ export class Link {
       return;
     }
 
-    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS) * 1000;
 
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -722,7 +722,7 @@ export class Link {
       setTimeout(() => {
         this.dst.receivePacket(packet, this);
       });
-    }, sendingTime * TIME_SLOWDOWN);
+    }, Math.floor(sendingTime * TIME_SLOWDOWN));
   }
 
   private sendFromDstBuffer(): void {
@@ -741,7 +741,7 @@ export class Link {
 
     this.dstNextTimer = setTimeout(()=>{
       this.sendFromDstBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN * 1000);
 
     if (Math.random() * 100 < this.lossRate) {
       this.dstLostPktCounter++;
@@ -750,7 +750,7 @@ export class Link {
       return;
     }
 
-    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS) * 1000;
 
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
