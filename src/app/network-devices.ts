@@ -886,7 +886,11 @@ export class Flow {
   }
 
   private updateRTT(number: RTT): void {
-    this.RTT = (1 - ALPHA) * this.RTT + ALPHA * this.RTT;
+    if (this.RTT) {
+      this.RTT = (1 - ALPHA) * this.RTT + ALPHA * this.RTT;
+    } else {
+      this.RTT = RTT
+    }
   }
 
   private updateRTO(): void {

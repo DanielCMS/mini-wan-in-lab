@@ -10,7 +10,7 @@ export const IPv4 = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-
 export const RWND_INIT = Number.MAX_VALUE;
 export const SSTHRESH_INIT = Number.MAX_VALUE;
 
-export const ALPHA = 0.25;
+export const ALPHA = 0.125;
 export const BETA = 2; // RTO = BETA * RTT
 export const MEGA = 1024 * 1024; // 1 MB = 1024 * 1024 Byte
 export const MIN_RTO = 1000 * TIME_SLOWDOWN;
