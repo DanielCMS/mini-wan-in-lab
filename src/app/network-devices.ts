@@ -836,10 +836,8 @@ export class Flow {
 
   public initTime: number;
   public waitingTime: number;
-  public flowId: number;
   public flowSource: string;
   public flowDestination: string;
-  public sendingHost: Host;
   public dataRemaining: number;
   public algorithm: AlgType;
   public flowStatus: FlowStatus = FlowStatus.Waiting;
@@ -856,6 +854,7 @@ export class Flow {
   public packetsOnFly: Packet[] = [];
 
   private congestionControl: CongestionControlAlg;
+  private RTOTimer: number;
 
   constructor(public flowId: number, public sendingHost: Host, public destIP: string, public data: number, public time: number) {
     this.flowSource = sendingHost.getIp();
@@ -885,11 +884,11 @@ export class Flow {
     setTimeout(() => this.sendingHost.sendPacket(packet));
   }
 
-  private updateRTT(number: RTT): void {
+  private updateRTT(RTT: number): void {
     if (this.RTT) {
       this.RTT = (1 - ALPHA) * this.RTT + ALPHA * this.RTT;
     } else {
-      this.RTT = RTT
+      this.RTT = RTT;
     }
   }
 
@@ -949,7 +948,7 @@ export class Flow {
     if (this.flowStatus === FlowStatus.SS) {
       this.cwnd++;
 
-      if (this.cwnd === this.ssthresth) {
+      if (this.cwnd >= this.ssthresh) {
         this.flowStatus = FlowStatus.CA;
       }
     }
@@ -989,7 +988,7 @@ export class Flow {
       let pkt = this.createPacket();
 
       if (pkt instanceof Packet) {
-        setTimeout(() => this.sendingHost.sendPacket(pkt)));
+        setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
         this.packetsOnFly.push(pkt);
       } else {
         break;
@@ -1011,8 +1010,8 @@ export class Flow {
 }
 
 export interface CongestionControlAlg {
-  public onReceiveNewAck(): void;
-  public onReceiveDupAck(): void;
+  onReceiveNewAck(): void;
+  onReceiveDupAck(): void;
 }
 
 export class Tahoe implements CongestionControlAlg {
@@ -1029,7 +1028,7 @@ export class Tahoe implements CongestionControlAlg {
   public onReceiveDupAck(): void {
     let flow = this.flow;
 
-    if (this.maxAckDup === 3) {
+    if (flow.maxAckDup === 3) {
       flow.cwnd = 1;
       flow.flowStatus = FlowStatus.CA;
     }
@@ -1044,7 +1043,7 @@ export class Reno implements CongestionControlAlg {
 
     if (flow.flowStatus === FlowStatus.FRFR) {
       flow.cwnd = flow.ssthresh;
-      flow.flowStats = FlowStatus.CA;
+      flow.flowStatus = FlowStatus.CA;
     } else if (flow.flowStatus === FlowStatus.CA) {
       flow.cwnd = flow.cwnd + 1 / flow.cwnd;
     }
@@ -1053,11 +1052,11 @@ export class Reno implements CongestionControlAlg {
   public onReceiveDupAck(): void {
     let flow = this.flow;
 
-    if (this.maxAckDup === 3) {
+    if (flow.maxAckDup === 3) {
       flow.cwnd = flow.ssthresh + 3;
       flow.flowStatus = FlowStatus.FRFR;
-    } else if (this.maxAckDup > 3) {
-      this.cwnd = this.cwnd + 1;
+    } else if (flow.maxAckDup > 3) {
+      flow.cwnd = flow.cwnd + 1;
     }
   }
 }
