@@ -911,6 +911,12 @@ export class Flow {
       this.windowStart = packet.sequenceNumber;
       this.packetsOnFly = this.packetsOnFly.filter(pkt => pkt.sequenceNumber >= packet.sequenceNumber);
 
+      if (this.packetsOnFly.length === 0 && this.dataRemaining <= 0) {
+        this.flowStatus = FlowStatus.Complete;
+
+        return;
+      }
+
       if (packet.sequenceNumber > this.maxAck) {
         this.maxAck = packet.sequenceNumber;
         this.maxAckDup = 1;
