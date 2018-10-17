@@ -4,8 +4,9 @@ import * as jsgraphs from 'js-graph-algorithms';
 import * as Deque from 'double-ended-queue';
 import { TIME_SLOWDOWN, BROADCAST_IP, OSPF_SIZE, PKT_SIZE,
   HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
-  BETA, IPv4, MEGA } from './constants';
-import { v1 } from 'uuid';
+  ALPHA, BETA, MIN_RTO, IPv4, MEGA } from './constants';
+import { v4 } from 'uuid';
+import { SeriesPoint } from './series-point';
 
 export class Device {
   public interfaces: Interface[] = [];
@@ -56,9 +57,9 @@ export class Host extends Device {
 
   addNewFlow(dest: string, data: number, startTime: number): void {
     if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      let id = v1();
+      let id = v4();
       this.flowList.push(new Flow(id, this, dest, data, startTime));
-    } else{
+    } else {
       this.hasInvalidFormat = true;
     }
   }
@@ -74,8 +75,6 @@ export class Host extends Device {
   }
 
   public receivePacket(packet: Packet, link: Link): void {
-    if (packet.type === PacketType.Payload) {
-    }    
     if (packet.dstIp !== this.getIp()) {
       return;
     }
@@ -84,18 +83,25 @@ export class Host extends Device {
 
     if (packet.type === PacketType.Syn) {
       let flow = new FlowReceived(flowId);
-      this.receiveList.push(flow);    // Construct the session
+
+      this.receiveList.push(flow); // Establish the session
+
       let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE);
-      setTimeout(()=>this.sendPacket(pkt));
+
+      setTimeout(() => this.sendPacket(pkt));
+
       return;
     }
 
     if (packet.type === PacketType.SynAck) {
       let flows = this.flowList.filter(r => r.flowId === flowId);
+
       if (flows.length > 0){
         let flow = flows[0];
+
         flow.onReceive(packet);
       }
+
       return;
     }
 
@@ -105,7 +111,9 @@ export class Host extends Device {
         let flow = flows[0];
 
         flow.onReceive(packet);
+
         let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
+
         setTimeout(()=>this.sendPacket(pkt));
       }
       return;
@@ -124,13 +132,12 @@ export class Host extends Device {
   }
 
   public sendPacket(packet: Packet): void {
-    if (packet.type === PacketType.Payload) {
-    }
     let gateway = this.interfaces[0];
+
     if (gateway) {
       gateway.link.sendPacketFrom(this, packet);
     } else {
-      (`Dropping packet at ${this.label} due to missing gateway.`);
+      console.log(`Dropping packet at ${this.label} due to missing gateway.`);
     }
   }
 }
@@ -209,7 +216,7 @@ export class Router extends Device {
     this.cachedBroadcastPkt.push(packet);
 
     setTimeout(() => {
-      this.cachedBroadcastPkt.filter(_pkt => _pkt !== packet);
+      this.cachedBroadcastPkt = this.cachedBroadcastPkt.filter(_pkt => _pkt !== packet);
     }, BROADCAST_CACHE_INTERVAL);
 
     for (let intf of this.interfaces) {
@@ -385,6 +392,9 @@ const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
+const STATS_UPDATE_INTERVAL = 1000; // 1s
+const MAX_STATS_LENGTH = 80;
+const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
 
 export class Link {
   public isLink: boolean = true;
@@ -393,6 +403,11 @@ export class Link {
   public lossRate: number = DEFAULT_LOSS_RATE;
   public bufferSize: number = DEFAULT_BUFFER_SIZE;
   public metric: number = DEFAULT_METRIC;
+
+  public latencyStats: SeriesPoint[][] = [];
+  public packetLossStats: SeriesPoint[][] = [];
+  public throughputStats: SeriesPoint[][] = [];
+  public bufferSizeStats: SeriesPoint[][] = [];
 
   private srcBuffer = new Deque();
   private dstBuffer = new Deque();
@@ -403,19 +418,48 @@ export class Link {
   private dstSending: boolean = false;
 
   private srcLatencyData: number[] = [];
+  private srcBufferData: number[] = [];
   private srcLostPktCounter: number = 0;
-  private srcSentPktCounter: number = 0;
   private srcThroughputCounter: number = 0;
 
+  private srcLatencyRaw: number[] = [];
+  private srcLatencyStats: SeriesPoint[] = [];
+  private srcPacketLossStats: SeriesPoint[] = [];
+  private srcThroughputRaw: number[] = [];
+  private srcThroughputStats: SeriesPoint[] = [];
+  private srcBufferSizeRaw: number[] = [];
+  private srcBufferSizeStats: SeriesPoint[] = [];
+  private srcLastUpdated: number;
+
   private dstLatencyData: number[] = [];
+  private dstBufferData: number[] = [];
   private dstLostPktCounter: number = 0;
-  private dstSentPktCounter: number = 0;
   private dstThroughputCounter: number = 0;
+
+  private dstLatencyRaw: number[] = [];
+  private dstLatencyStats: SeriesPoint[] = [];
+  private dstPacketLossStats: SeriesPoint[] = [];
+  private dstThroughputRaw: number[] = [];
+  private dstThroughputStats: SeriesPoint[] = [];
+  private dstBufferSizeRaw: number[] = [];
+  private dstBufferSizeStats: SeriesPoint[] = [];
+  private dstLastUpdated: number;
 
   private srcTransTimer: number;
   private dstTransTimer: number;
+  private srcNextTimer: number;
+  private dstNextTimer: number;
+  private srcStatsTimer: number;
+  private dstStatsTimer: number;
 
   constructor(public id: string, public src: Device, public dst: Device) {
+    let now = Date.now();
+
+    this.srcLastUpdated = now;
+    this.dstLastUpdated = now;
+
+    this.updateSrcStats();
+    this.updateDstStats();
   }
 
   public getOtherEnd(element: Device): Device {
@@ -438,12 +482,14 @@ export class Link {
     if (source === this.src) {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
-      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
+      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB && source instanceof Router) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
         return;
       }
 
       this.srcBuffer.push(packet);
+      this.srcBufferData.push(newSrcBufferSize);
       this.srcBufferUsed = newSrcBufferSize;
 
       if (!this.srcSending) {
@@ -452,18 +498,193 @@ export class Link {
     } else {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
-      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
+      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB && source instanceof Router) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
+
         return;
       }
 
       this.dstBuffer.push(packet);
+      this.srcBufferData.push(newDstBufferSize);
       this.dstBufferUsed = newDstBufferSize;
 
       if (!this.dstSending) {
         this.sendFromDstBuffer();
       }
     }
+  }
+
+  private notifyStatsUpdate(): void {
+    this.latencyStats = [this.srcLatencyStats, this.dstLatencyStats];
+    this.throughputStats = [this.srcThroughputStats, this.dstThroughputStats];
+    this.packetLossStats = [this.srcPacketLossStats, this.dstPacketLossStats];
+    this.bufferSizeStats = [this.srcBufferSizeStats, this.dstBufferSizeStats];
+  }
+
+  private pushRawAndGetAvg(value: number, raw: number[]): number {
+    raw.push(value);
+
+    if (raw.length > AVG_LENGTH) {
+      raw.shift();
+    }
+
+    return raw.reduce((last, next) => last + next, 0) / Math.max(raw.length, 1);
+  }
+
+  private updateSrcStats(): void {
+    let now = Date.now();
+
+    // Update latency
+    let latencyAvg = this.srcLatencyData
+      .reduce((last, next) => last + next, 0) / this.srcLatencyData.length / TIME_SLOWDOWN;
+
+    if (isNaN(latencyAvg)) {
+      latencyAvg = this.delay;
+    }
+
+    latencyAvg = this.pushRawAndGetAvg(latencyAvg, this.srcLatencyRaw);
+
+    this.srcLatencyStats.push({
+      time: now,
+      value: latencyAvg
+    });
+
+    if (this.srcLatencyStats.length > MAX_STATS_LENGTH) {
+      this.srcLatencyStats.shift();
+    }
+
+    this.srcLatencyData = [];
+
+    // Update buffer size
+    let bufferAvg = this.srcBufferData
+      .reduce((last, next) => last + next, 0) / Math.max(this.srcBufferData.length, 1) / BYTES_IN_KB;
+
+    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.srcBufferSizeRaw);
+
+    this.srcBufferSizeStats.push({
+      time: now,
+      value: bufferAvg
+    });
+
+    this.srcBufferData = [];
+
+    if (this.srcBufferSizeStats.length > MAX_STATS_LENGTH) {
+      this.srcBufferSizeStats.shift();
+    }
+
+    // Update pakcet loss
+    this.srcPacketLossStats.push({
+      time: now,
+      value: this.srcLostPktCounter
+    });
+
+    if (this.srcPacketLossStats.length > MAX_STATS_LENGTH) {
+      this.srcPacketLossStats.shift()
+    }
+
+    this.srcLostPktCounter = 0;
+
+    // Update throughput
+    let throughput = this.srcThroughputCounter / (now - this.srcLastUpdated) * TIME_SLOWDOWN / 125;
+    let avg = this.pushRawAndGetAvg(throughput, this.srcThroughputRaw);
+
+    this.srcThroughputStats.push({
+      time: now,
+      value: avg
+    });
+
+    if (this.srcThroughputStats.length > MAX_STATS_LENGTH) {
+      this.srcThroughputStats.shift();
+    }
+
+    this.srcLastUpdated = now;
+    this.srcThroughputCounter = 0;
+
+    // Schedule a future updates
+    this.srcStatsTimer = setTimeout(() => {
+      this.updateSrcStats();
+    }, STATS_UPDATE_INTERVAL);
+
+    // Notify a redraw
+    this.notifyStatsUpdate();
+  }
+
+  private updateDstStats(): void {
+    let now = Date.now();
+
+    // Update latency
+    let latencyAvg = this.dstLatencyData
+      .reduce((last, next) => last + next, 0) / this.dstLatencyData.length / TIME_SLOWDOWN;
+
+    if (isNaN(latencyAvg)) {
+      latencyAvg = this.delay;
+    }
+
+    latencyAvg = this.pushRawAndGetAvg(latencyAvg, this.dstLatencyRaw);
+
+    this.dstLatencyStats.push({
+      time: now,
+      value: latencyAvg
+    });
+
+    if (this.dstLatencyStats.length > MAX_STATS_LENGTH) {
+      this.dstLatencyStats.shift();
+    }
+
+    this.dstLatencyData = [];
+
+    // Update buffer size
+    let bufferAvg = this.dstBufferData
+      .reduce((last, next) => last + next, 0) / Math.max(this.dstBufferData.length, 1) / BYTES_IN_KB;
+
+    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.dstBufferSizeRaw);
+
+    this.dstBufferSizeStats.push({
+      time: now,
+      value: bufferAvg
+    });
+
+    this.dstBufferData = [];
+
+    if (this.dstBufferSizeStats.length > MAX_STATS_LENGTH) {
+      this.dstBufferSizeStats.shift();
+    }
+
+    // Update pakcet loss
+    this.dstPacketLossStats.push({
+      time: now,
+      value: this.dstLostPktCounter
+    });
+
+    if (this.dstPacketLossStats.length > MAX_STATS_LENGTH) {
+      this.dstPacketLossStats.shift();
+    }
+
+    this.dstLostPktCounter = 0;
+
+    // Update throughput
+    let throughput = this.dstThroughputCounter / (now - this.dstLastUpdated) * TIME_SLOWDOWN / 125;
+    let avg = this.pushRawAndGetAvg(throughput, this.dstThroughputRaw);
+
+    this.dstThroughputStats.push({
+      time: now,
+      value: avg
+    });
+
+    if (this.dstThroughputStats.length > MAX_STATS_LENGTH) {
+      this.dstThroughputStats.shift();
+    }
+
+    this.dstLastUpdated = now;
+    this.dstThroughputCounter = 0;
+
+    // Schedule a future updates
+    this.dstStatsTimer = setTimeout(() => {
+      this.updateDstStats();
+    }, STATS_UPDATE_INTERVAL);
+
+    // Notify a redraw
+    this.notifyStatsUpdate();
   }
 
   private sendFromSrcBuffer(): void {
@@ -478,13 +699,11 @@ export class Link {
     let packet = <Packet>this.srcBuffer.shift();
 
     this.srcBufferUsed = this.srcBufferUsed - packet.size;
-    this.srcSentPktCounter++;
-
     packet.markSent();
 
-    setTimeout(()=> {
+    this.srcNextTimer = setTimeout(() => {
       this.sendFromSrcBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN * 1000);
 
     if (Math.random() * 100 < this.lossRate) {
       this.srcLostPktCounter++;
@@ -493,7 +712,7 @@ export class Link {
       return;
     }
 
-    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS) * 1000;
 
     this.srcTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -503,7 +722,7 @@ export class Link {
       setTimeout(() => {
         this.dst.receivePacket(packet, this);
       });
-    }, sendingTime * TIME_SLOWDOWN);
+    }, Math.floor(sendingTime * TIME_SLOWDOWN));
   }
 
   private sendFromDstBuffer(): void {
@@ -518,13 +737,11 @@ export class Link {
     let packet = <Packet>this.dstBuffer.shift();
 
     this.dstBufferUsed = this.dstBufferUsed - packet.size;
-    this.dstSentPktCounter++;
-
     packet.markSent();
 
-    setTimeout(()=>{
+    this.dstNextTimer = setTimeout(()=>{
       this.sendFromDstBuffer();
-    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN);
+    }, packet.size / (this.capacity * BYTES_PER_MBPS) * TIME_SLOWDOWN * 1000);
 
     if (Math.random() * 100 < this.lossRate) {
       this.dstLostPktCounter++;
@@ -533,7 +750,7 @@ export class Link {
       return;
     }
 
-    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS);
+    let sendingTime = this.delay + packet.size / (this.capacity * BYTES_PER_MBPS) * 1000;
 
     this.dstTransTimer = setTimeout(() => {
       packet.markReceived();
@@ -551,6 +768,10 @@ export class Link {
     // Stop ongoing transmission
     clearTimeout(this.srcTransTimer);
     clearTimeout(this.dstTransTimer);
+    clearTimeout(this.srcNextTimer);
+    clearTimeout(this.dstNextTimer);
+    clearTimeout(this.srcStatsTimer);
+    clearTimeout(this.dstStatsTimer);
   }
 
   public updateMetric(metric: number): void {
@@ -613,54 +834,36 @@ export class Packet {
 
 export class Flow {
 
-  public flowId: number;
-  public flowSource: string;
-  public flowDestination: string;
-  public sendingHost: Host;
-  public dataAmount: number;
   public initTime: number;
   public waitingTime: number;
-  public packetList: Packet[];
-  public packetSYN:Packet;
-  public packetACK: Packet;
+  public flowSource: string;
+  public flowDestination: string;
+  public dataRemaining: number;
   public algorithm: AlgType;
-  public flowStatus: FlowStatus;
-  public cwnd: number;
+  public flowStatus: FlowStatus = FlowStatus.Waiting;
+  public cwnd: number = 1;
   public RTT: number;
   public RTO: number;
-  public ssthresh: number;
-  public windowStart: number;
+  public ssthresh: number = SSTHRESH_INIT;
+  public windowStart: number = 0;
   public toSend: number;
   public maxAck: number = 0;
   public maxAckDup: number = 0;
   public timeSYN: number;
-  public timeSYNACK: number;
-  public eventList: any [] = [];
+  public seqNum: number = 0;
+  public packetsOnFly: Packet[] = [];
 
-  constructor(public id: number, public src: Host, public destIP: string, public data: number, public time: number) {
-    this.flowId = id;
-    this.flowSource = src.getIp();
+  private congestionControl: CongestionControlAlg;
+  private RTOTimer: number;
+
+  constructor(public flowId: number, public sendingHost: Host, public destIP: string, public data: number, public time: number) {
+    this.flowSource = sendingHost.getIp();
     this.flowDestination = destIP + "/24";
-    this.sendingHost = src;
-    this.dataAmount = data; // in MB
-    data = data * MEGA;  // in Byte
+    this.dataRemaining = data * MEGA; // in Bytes
     this.waitingTime = time;
     this.initTime = Date.now();
-    this.algorithm = AlgType[src.algorithm];
 
-    let seqNum = 1;
-
-    this.packetList = [];
-
-    while (data > 0) {
-      let pktSize = Math.min(data, PAYLOAD_SIZE);
-
-      this.packetList.push(new Packet(this.flowId, src.getIp(), destIP + "/24", PacketType.Payload, seqNum, HEADER_SIZE + pktSize))
-      seqNum++;
-      data = data - pktSize;
-    }
-
-    this.flowStatus = FlowStatus.Waiting;
+    this.congestionControl = new Reno(this);
 
     for (let n = 0; n < time; n++) {
       setTimeout(() => this.countDown(), (n + 1) * 1000);
@@ -675,148 +878,205 @@ export class Flow {
 
   private handShake(): void {
     this.flowStatus = FlowStatus.HandShake;
-    this.packetSYN = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
     this.timeSYN = Date.now();
-    setTimeout(() => this.sendingHost.sendPacket(this.packetSYN));
+    let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
+
+    setTimeout(() => this.sendingHost.sendPacket(packet));
+  }
+
+  private updateRTT(RTT: number): void {
+    if (this.RTT) {
+      this.RTT = (1 - ALPHA) * this.RTT + ALPHA * RTT;
+    } else {
+      this.RTT = RTT;
+    }
+  }
+
+  private updateRTO(): void {
+    this.RTO = Math.max(this.RTT * BETA, MIN_RTO);
   }
 
   public onReceive(packet: Packet): void {
     if (packet.type === PacketType.SynAck) {
-      this.packetACK = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
-      setTimeout(() => this.sendingHost.sendPacket(this.packetACK));
-      this.timeSYNACK = Date.now();
-      this.RTT = this.timeSYNACK - this.timeSYN;
-      this.RTO = BETA * this.RTT;
+      let ack = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
 
-      switch(this.algorithm) {
-        case AlgType.Reno:
-          this.sendPackets_Reno();
-          break;
-        case AlgType.Vegas:
-          break;
-        default:
-          break;
-      }
+      setTimeout(() => this.sendingHost.sendPacket(ack));
 
-      return;
+      this.updateRTT(Date.now() - this.timeSYN);
+      this.updateRTO();
+      this.flowStatus = FlowStatus.SS;
     }
 
     if (packet.type === PacketType.Ack) {
-      switch(this.algorithm) {
-        case AlgType.Reno:
-          this.onReceiveAck_Reno(packet);
-          break;
-        case AlgType.Vegas:
-          break;
-        default:
-          break;
+      this.windowStart = packet.sequenceNumber;
+      this.packetsOnFly = this.packetsOnFly.filter(pkt => pkt.sequenceNumber >= packet.sequenceNumber);
+
+      if (this.packetsOnFly.length === 0 && this.dataRemaining <= 0) {
+        this.flowStatus = FlowStatus.Complete;
+
+        return;
       }
+
+      if (packet.sequenceNumber > this.maxAck) {
+        this.maxAck = packet.sequenceNumber;
+        this.maxAckDup = 1;
+
+        this.onReceiveNewAck();
+      } else {
+        this.maxAckDup++;
+        this.onReceiveDupAck();
+      }
+    }
+
+    this.send();
+  }
+
+  private restartRTO(): void {
+    clearTimeout(this.RTOTimer);
+    this.RTOTimer = setTimeout(() => {
+      this.onTimeout();
+    }, this.RTO);
+  }
+
+  private collapseSsthresh(): void {
+    let flightSize = this.packetsOnFly.length;
+
+    this.ssthresh = Math.floor(Math.max(flightSize / 2, 2));
+  }
+
+  private retransmit(): void {
+    let pkt = this.packetsOnFly[0];
+
+    if (pkt) {
+      setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
     }
   }
 
-//-------- Below is the code for TCP Reno --------
-  private sendPackets_Reno(): void {
-    this.cwnd = 1;
-    this.ssthresh = SSTHRESH_INIT;
-    this.toSend = 0;
-    this.windowStart = 0;
-    this.slowStart();
+  private onReceiveNewAck(): void {
+    if (this.flowStatus === FlowStatus.SS) {
+      this.cwnd++;
+
+      if (this.cwnd >= this.ssthresh) {
+        this.flowStatus = FlowStatus.CA;
+      }
+    }
+
+    this.restartRTO();
+    this.congestionControl.onReceiveNewAck();
+  }
+
+  private onReceiveDupAck(): void {
+    if (this.maxAckDup === 3) {
+      // 3 dup ACK, packet lost
+      this.retransmit();
+      this.collapseSsthresh();
+    }
+
+    this.congestionControl.onReceiveDupAck();
+  }
+
+  private createPacket(): (Packet | void) {
+    if (this.dataRemaining <= 0) {
+      return;
+    }
+
+    let pktSize = Math.min(this.dataRemaining, PAYLOAD_SIZE);
+    let packet = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Payload, this.seqNum, HEADER_SIZE + pktSize)
+
+    this.seqNum++;
+
+    let lastOnFlight = this.packetsOnFly.slice(-1)[0];
+
+    if (lastOnFlight && this.seqNum < lastOnFlight.sequenceNumber) {
+      console.log("Retransmitting on flight packet");
+    } else {
+      this.dataRemaining = this.dataRemaining - pktSize;
+    }
+
+    return packet;
   }
 
   private send(): void {
     let stop = this.windowStart + this.cwnd;
 
-    for (let i = this.toSend; i < stop && i < this.packetList.length; i++) {
-      let pkt = this.packetList[this.toSend];
+    while (this.seqNum < stop) {
+      let pkt = this.createPacket();
 
-      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
-      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
-
-      this.toSend++;
-    }
-  }
-
-  private slowStart(): void {
-    this.flowStatus = FlowStatus.SS;
-    this.send();
-  }
-
-  private congestionAvoidance(): void {
-    this.flowStatus = FlowStatus.CA;
-    this.send();
-  }
-
-  private frfr(): void {
-    this.flowStatus = FlowStatus.FRFR;
-    this.send();
-  }
-
-  private timeOut(pkt: Packet): void {
-    if (pkt.sequenceNumber > this.windowStart) {
-      // Meaning this packet has not been ack'ed yet
-//      for (var i = 0; i < this.eventList.length; i++) {
-//        clearTimeout(this.eventList[i]);
-//      }
-//      this.eventList.length = 0;
-      this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
-      this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
-      this.cwnd = 1; // According to Page 7, https://tools.ietf.org/html/rfc5681#section-3.1
-      let flightSize = this.toSend - this.windowStart;
-      this.ssthresh = Math.max(flightSize/2, 2);
-      this.slowStart();
-    } else {
-      return;
-    }
-  }
-
-  public onReceiveAck_Reno(packet: Packet): void {
-    if (packet.sequenceNumber > this.packetList.length) {
-      if(this.flowStatus !== FlowStatus.Complete){
-        this.windowStart = packet.sequenceNumber - 1;
-        this.flowStatus = FlowStatus.Complete;
-      }
-      return;
-    }
-
-    if (packet.sequenceNumber > this.maxAck) {
-      this.maxAck = packet.sequenceNumber;
-      this.maxAckDup = 1;
-
-      if (this.flowStatus === FlowStatus.FRFR) {
-        this.cwnd = this.ssthresh;
-        this.windowStart = packet.sequenceNumber - 1;
-        this.congestionAvoidance();
-        return;
-      }
-
-      if (this.cwnd < this.ssthresh) {
-        this.windowStart = packet.sequenceNumber - 1;
-        this.cwnd = this.cwnd + 1;
-        this.slowStart();
+      if (pkt) {
+        setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
+        this.packetsOnFly.push(pkt);
       } else {
-        this.windowStart = packet.sequenceNumber - 1;
-        this.cwnd = this.cwnd + 1.0 / this.cwnd;
-        this.congestionAvoidance();
-      }
-    } else {
-      this.maxAckDup++;
-      if (this.maxAckDup === 3) {
-        // 3 dup ACK, fast retransmit and fast recovery
-        let flightSize = this.toSend - this.windowStart;
-        this.ssthresh = Math.max(flightSize/2, 2);
-        this.cwnd = this.ssthresh + 3;
-        let pkt = this.packetList[this.maxAck - 1];
-        this.eventList.push(setTimeout(() => this.sendingHost.sendPacket(pkt)));
-        this.eventList.push(setTimeout(() => this.timeOut(pkt), this.RTO));
-        this.frfr();
-      } else if (this.maxAckDup > 3) {
-        // Additional dup arrives, need to inflate cwnd artificially
-        this.cwnd++;
-        this.frfr();
+        break;
       }
     }
   }
-//-------- Above is the code for TCP Reno --------
+
+  private onTimeout(): void {
+    this.retransmit();
+    this.collapseSsthresh();
+
+    // Exponential backoff
+    this.RTO = this.RTO * 2;
+    this.restartRTO();
+
+    this.cwnd = 1;
+    this.flowStatus = FlowStatus.SS;
+    this.seqNum = this.maxAck;
+
+    this.send();
+  }
+}
+
+export interface CongestionControlAlg {
+  onReceiveNewAck(): void;
+  onReceiveDupAck(): void;
+}
+
+export class Tahoe implements CongestionControlAlg {
+  constructor(public flow: Flow) {}
+
+  public onReceiveNewAck(): void {
+    let flow = this.flow;
+
+    if (flow.flowStatus === FlowStatus.CA) {
+      flow.cwnd = flow.cwnd + 1 / flow.cwnd;
+    }
+  }
+
+  public onReceiveDupAck(): void {
+    let flow = this.flow;
+
+    if (flow.maxAckDup === 3) {
+      flow.cwnd = 1;
+      flow.flowStatus = FlowStatus.SS;
+    }
+  }
+}
+
+export class Reno implements CongestionControlAlg {
+  constructor(public flow: Flow) {}
+
+  public onReceiveNewAck(): void {
+    let flow = this.flow;
+
+    if (flow.flowStatus === FlowStatus.FRFR) {
+      flow.cwnd = flow.ssthresh;
+      flow.flowStatus = FlowStatus.CA;
+    } else if (flow.flowStatus === FlowStatus.CA) {
+      flow.cwnd = flow.cwnd + 1 / flow.cwnd;
+    }
+  }
+
+  public onReceiveDupAck(): void {
+    let flow = this.flow;
+
+    if (flow.maxAckDup === 3) {
+      flow.cwnd = flow.ssthresh + 3;
+      flow.flowStatus = FlowStatus.FRFR;
+    } else if (flow.maxAckDup > 3) {
+      flow.cwnd = flow.cwnd + 1;
+    }
+  }
 }
 
 export class FlowReceived {

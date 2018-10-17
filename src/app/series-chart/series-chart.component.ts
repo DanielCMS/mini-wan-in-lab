@@ -1,6 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, OnInit, Input } from '@angular/core';
 import { SeriesPoint } from '../series-point';
-import { v1 } from 'uuid';
+import { v4 } from 'uuid';
 import * as d3 from 'd3';
 
 function getMaxValue(multiData: SeriesPoint[][]): number {
@@ -51,23 +51,12 @@ function getNextTwoPower(value: number): number {
     return p;
 }
 
-const now = Date.now();
-const MOCK = [[{
-  time: now + 1000, value: 5
-}, {
-  time: now + 5000, value: 10
-}], [{
-  time: now + 1000, value: 25
-}, {
-  time: now + 5000, value: 5
-
-}]];
-
-const INTERVAL = 100000; // 100s
+const INTERVAL = 90000; // 90s
 const ANIMATION_DURATION = 300;
 const X_TICKS = 5;
 const Y_TICKS = 4;
-const Y_LABEL_MARGIN = 25;
+const Y_LABEL_MARGIN = 30;
+const TOP_MARGIN = 9;
 const LINE_COLORS = ["#00B4DC", "#CC0000"];
 const STROKE_WIDTH = 2;
 
@@ -76,7 +65,7 @@ const STROKE_WIDTH = 2;
   templateUrl: './series-chart.component.html',
   styleUrls: ['./series-chart.component.css']
 })
-export class SeriesChartComponent implements OnInit {
+export class SeriesChartComponent implements OnInit, OnChanges {
 
   private id: string;
   @Input() data: SeriesPoint[][];
@@ -84,22 +73,35 @@ export class SeriesChartComponent implements OnInit {
   @Input() yAxisLength: number;
 
   private xAxisLength: number;
+  private yAxisAdjusted: number;
   private Y_LABEL_MARGIN: number = Y_LABEL_MARGIN;
+  private TOP_MARGIN: number = TOP_MARGIN;
 
   constructor() {
     // The prefix is needed to make it a valid id
-    this.id = `id-${v1()}`;
+    this.id = `id-${v4()}`;
   }
 
   ngOnInit() {
     this.xAxisLength = this.xAxisWidth - Y_LABEL_MARGIN;
+    this.yAxisAdjusted = this.yAxisLength - TOP_MARGIN;
+
     setTimeout(() => {
       this.draw();
     });
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    // Reset tmp device during link adding if canvas status changed
+    for (let propName in changes) {
+      if (propName === "data") {
+        this.draw();
+      }
+    }
+  }
+
   private draw(): void {
-    let data = MOCK;
+    let data = this.data;
     let dataMax;
     let currentTime = Date.now();
     let startingTime = Math.max(getMinTime(data), currentTime - INTERVAL);
@@ -120,7 +122,7 @@ export class SeriesChartComponent implements OnInit {
       .range([0, this.xAxisLength]);
     let computeY = d3.scaleLinear()
       .domain([0, getNextTwoPower(dataMax)])
-      .range([this.yAxisLength, 0]);
+      .range([this.yAxisAdjusted, 0]);
     let xAxis = d3.axisBottom()
       .scale(computeXaxis)
       .ticks(X_TICKS)
@@ -128,7 +130,7 @@ export class SeriesChartComponent implements OnInit {
     let yAxis = d3.axisLeft()
       .scale(computeY)
       .ticks(Y_TICKS)
-      .tickFormat(d => d3.format(".2s")(d));
+      .tickFormat(d => d3.format(".2")(d));
 
     let existingXAxis = svg.select(".axis.x").selectAll(".x-axis")["_groups"][0];
     let existingYAxis = svg.select(".axis.y").selectAll(".y-axis")["_groups"][0];
@@ -145,7 +147,7 @@ export class SeriesChartComponent implements OnInit {
     } else {
       svg.select(".x.axis")
         .selectAll(".x-axis")
-        .transition().duration(ANIMATION_DURATION).ease("sin")
+        .transition().duration(ANIMATION_DURATION).ease(d3.easeSin)
         .call(xAxis);
     }
 
@@ -157,7 +159,7 @@ export class SeriesChartComponent implements OnInit {
     } else {
       svg.select(".y.axis")
         .selectAll(".y-axis")
-        .transition().duration(ANIMATION_DURATION).ease("sin")
+        .transition().duration(ANIMATION_DURATION).ease(d3.easeSin)
         .call(yAxis);
     }
 

@@ -12,7 +12,7 @@ const STATIC_CLICK_DELTA = 3;
   templateUrl: './network-structure.component.html',
   styleUrls: ['./network-structure.component.scss']
 })
-export class NetworkStructureComponent implements OnInit, OnChanges{
+export class NetworkStructureComponent implements OnInit, OnChanges {
 
   @Input() canvasOffset: Vector;
   @Input() canvasStatus: CanvasStatus;

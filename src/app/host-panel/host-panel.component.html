@@ -47,7 +47,7 @@
       <tr *ngFor="let flow of model.flowList; let i = index">
         <td width="3%"> {{i+1}} </td>
         <td width="43%" style = "font-size: 12px"> {{flow.flowDestination}} </td>
-        <td width="27%"> {{flow.dataAmount}} </td>
+        <td width="27%"> {{flow.dataRemaining}} </td>
         <!--<td width="27%"><div class = "circle-loader load-complete checkmark draw"></div></td>   -->  
         <td width="27%">
           <ng-container [ngSwitch]="true">

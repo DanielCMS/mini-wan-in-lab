@@ -8,7 +8,11 @@
 >
   <div class="handle">
     <img width="18" height="18" src="/assets/images/cable.svg" alt="">
-    <span class="title-text">{{model.src.label}} &harr; {{model.dst.label}}</span>
+    <span class="title-text">
+      <span style="color: #00B4DC">{{model.src.label}}</span>
+      &harr;
+      <span style="color: #CC0000">{{model.dst.label}}</span>
+    </span>
     <span class="cross" (click)="closePanel()">✕</span>
   </div>
 
@@ -90,6 +94,16 @@
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.throughputStats"
+    ></app-series-chart>
+    <div class="monitor-title">
+      <img src="/assets/images/latency-icon.svg">
+      Buffer Used (KB)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+      [data]="model.bufferSizeStats"
     ></app-series-chart>
 
     <div class="monitor-title">
@@ -99,15 +113,17 @@
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.latencyStats"
     ></app-series-chart>
 
     <div class="monitor-title">
       <img src="/assets/images/packet-loss-icon.svg">
-      LOSS RATE (%)
+      PACKET LOST PER SECOND
     </div>
     <app-series-chart
       [xAxisWidth]="250"
       [yAxisLength]="130"
+      [data]="model.packetLossStats"
     ></app-series-chart>
   </div>
 </div>
