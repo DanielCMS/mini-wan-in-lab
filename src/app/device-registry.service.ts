@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Vector } from './vector';
-import { Host, Router, Link, Device } from './network-devices';
+import { Host, Router, Link, Device, isDevice, isHost, isRouter, isLink } from './network-devices';
+import { HostProvider } from './host';
+import { RouterProvider } from './router';
+import { LinkProvider } from './link';
 import { v4 } from 'uuid';
 import { PanelRegistry } from './panel-registry.service';
 import { FeedbackService } from './feedback.service';
@@ -32,7 +35,7 @@ export class DeviceRegistry {
   public addRouter(position: Vector): void {
     let id = v4();
     let label = `Router ${this.routerLabelCounter}`;
-    let newRouter = new Router(id, label, position);
+    let newRouter = new RouterProvider(id, label, position);
 
     this.routerLabelCounter++;
 
@@ -43,7 +46,7 @@ export class DeviceRegistry {
   public addHost(position: Vector): void {
     let id = v4();
     let label = `Host ${this.hostLabelCounter}`;
-    let newHost = new Host(id, label, position);
+    let newHost = new HostProvider(id, label, position);
 
     this.hostLabelCounter++;
 
@@ -63,13 +66,13 @@ export class DeviceRegistry {
     if (this.isInterRouterLink(src, dst)) {
       ipPair = this.generateInterRouterIpPair();
     } else if (this.isAccessLink(src, dst)) {
-      if ((src instanceof Host) && (src.interfaces.length > 0)) {
+      if (isHost(src) && (src.interfaces.length > 0)) {
         this.feedback.sendError("A host cannot have two gateways.");
 
         return;
       }
 
-      if ((dst instanceof Host) && (dst.interfaces.length > 0)) {
+      if (isHost(dst) && (dst.interfaces.length > 0)) {
         this.feedback.sendError("A host cannot have two gateways.");
 
         return;
@@ -83,7 +86,7 @@ export class DeviceRegistry {
     }
 
     let id = v4();
-    let newLink = new Link(id, src, dst);
+    let newLink = new LinkProvider(id, src, dst);
 
     this.linkList.push(newLink);
     this.linkHashTable[id] = newLink;
@@ -109,21 +112,21 @@ export class DeviceRegistry {
 
     this.panelRegistry.closePanelFor(element);
 
-    if (element instanceof Device) {
+    if (isDevice(element)) {
       for (let intf of element.interfaces) {
         this.removeElementById(intf.link.id);
       }
 
-      if (element instanceof Host) {
+      if (isHost(element)) {
         let idx = this.hostList.indexOf(element);
 
         this.hostList.splice(idx, 1);
-      } else if (element instanceof Router) {
+      } else if (isRouter(element)) {
         let idx = this.routerList.indexOf(element);
 
         this.routerList.splice(idx, 1);
       }
-    } else if (element instanceof Link) {
+    } else if (isLink(element)) {
       let idx = this.linkList.indexOf(element);
 
       this.linkList.splice(idx, 1);
@@ -143,12 +146,12 @@ export class DeviceRegistry {
   }
 
   private isInterRouterLink(src: Device, dst: Device): boolean {
-    return (src instanceof Router) && (dst instanceof Router);
+    return isRouter(src) && isRouter(dst);
   }
 
   private isAccessLink(src: Device, dst: Device): boolean {
-    return ((src instanceof Router) && (dst instanceof Host)
-      || (src instanceof Host) && (dst instanceof Router));
+    return (isRouter(src) && isHost(dst))
+      || (isHost(src) && isRouter(dst));
   }
 
   private generateInterRouterIpPair() {
