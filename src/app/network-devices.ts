@@ -17,8 +17,6 @@ export interface Host extends Device {
   isHost: boolean;
   flowList: Flow[];
   receiveList: FlowReceived[];
-  algorithm: string;
-  hasInvalidFormat: boolean;
   getIp(): string;
   addNewFlow(dest: string, data: number, startTime: number): void;
   receivePacket(packet: Packet, link: Link): void;

@@ -15,7 +15,7 @@ export class Packet {
   private sentTime: number;
   private receivedTime: number;
 
-  constructor(public flowId:number, public srcIp: string, public dstIp: string, public type: PacketType,
+  constructor(public flowId: string, public srcIp: string, public dstIp: string, public type: PacketType,
     public sequenceNumber: number, public size: number, public payload?: any) {
   }
 
@@ -31,7 +31,7 @@ export class Packet {
     return this.receivedTime - this.sentTime;
   }
 
-  public getFlowId(): number {
+  public getFlowId(): string {
     return this.flowId;
   }
 }

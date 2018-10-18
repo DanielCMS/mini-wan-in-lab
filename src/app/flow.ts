@@ -37,6 +37,8 @@ export class FlowProvider implements Flow {
     this.flowDestination = destIP + "/24";
     this.dataRemaining = data * BYTES_PER_MB; // in Bytes
     this.updateAlg(AlgType.Reno);
+
+    this.countDown();
   }
 
   public updateAlg(alg: AlgType): void {
@@ -54,10 +56,11 @@ export class FlowProvider implements Flow {
   }
 
   private countDown(): void {
-    this.countdown--;
-
     if (this.countdown > 0) {
-      setTimeout(() => this.countDown(), COUNTDOWN_INTERVAL);
+      setTimeout(() => {
+        this.countDown();
+        this.countdown--;
+      }, COUNTDOWN_INTERVAL);
     } else {
       this.handShake();
     }

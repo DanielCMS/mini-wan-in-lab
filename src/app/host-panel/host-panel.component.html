@@ -86,7 +86,7 @@
       <tr>
         <td width="3%"> </td>
         <td width="43%">Destination</td>
-        <td width="27%">Data</td>
+        <td width="27%">Data (MB)</td>
         <td width="27%">Status</td>      
       </tr>
       <tr
@@ -99,7 +99,7 @@
           <ng-container [ngSwitch]="flow.flowStatus">
             <div *ngSwitchCase="FlowStatus.Waiting">
               <div class = "countdown">
-                <p style="font-size:13px; margin-top: -5px; color: gray">{{flow.waitingTime}}</p>
+                <p style="font-size:13px; margin-top: -5px; color: gray">{{flow.countdown}}</p>
               </div>
             </div>
             <div *ngSwitchCase="FlowStatus.Completed">

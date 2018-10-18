@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Host, FlowStatus } from '../network-devices';
+import { Host, Flow, FlowStatus } from '../network-devices';
+import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { BYTES_PER_MB } from '../constants';
 import { processToIp, processToPosInt } from '../processors';
@@ -26,7 +27,7 @@ export class HostPanelComponent implements OnInit {
   private newFlowDataAmount: string = "";
   private newFlowCountdown: string = "";
 
-  constructor() { }
+  constructor(private panelRegistry: PanelRegistry) { }
 
   private processToPosInt = processToPosInt;
   private processToIp = processToIp;
@@ -42,12 +43,16 @@ export class HostPanelComponent implements OnInit {
     this.addingNewFlow = !this.addingNewFlow;
   }
 
+  private openFlowPanel(flow: Flow): void {
+    this.panelRegistry.openPanelFor(flow);
+  }
+
   private closePanel(): void {
     this.close.emit();
   }
 
   private addNewFlow(): void {
-    this.model.addNewFlow(this.newFlowDest, this.newFlowDataAmount, this.newFlowCountdown);
+    this.model.addNewFlow(this.newFlowDest, +this.newFlowDataAmount, +this.newFlowCountdown);
     this.resetNewFlow();
   }
 
