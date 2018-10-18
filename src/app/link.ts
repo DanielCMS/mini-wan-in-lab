@@ -9,11 +9,12 @@ const DEFAULT_DELAY = 10;
 const DEFAULT_LOSS_RATE = 0.1;
 const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
-const BYTES_IN_KB = 1024;
-const BYTES_PER_MBPS = 1024 * 1024 / 8;
+const BYTES_IN_KB = 1000;
+const BYTES_PER_MBPS = 125000;
+const BPMS_PER_MBPS = 125;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
 const MAX_STATS_LENGTH = 80;
-const AVG_LENGTH = 0.125 * TIME_SLOWDOWN;
+const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
 
 export class LinkProvider implements Link {
   public isLink: boolean = true;
@@ -204,7 +205,7 @@ export class LinkProvider implements Link {
     this.srcLostPktCounter = 0;
 
     // Update throughput
-    let throughput = this.srcThroughputCounter / (now - this.srcLastUpdated) * TIME_SLOWDOWN / 125;
+    let throughput = this.srcThroughputCounter / Math.max(now - this.srcLastUpdated, 1) * TIME_SLOWDOWN / BPMS_PER_MBPS;
     let avg = this.pushRawAndGetAvg(throughput, this.srcThroughputRaw);
 
     this.srcThroughputStats.push({
@@ -282,7 +283,7 @@ export class LinkProvider implements Link {
     this.dstLostPktCounter = 0;
 
     // Update throughput
-    let throughput = this.dstThroughputCounter / (now - this.dstLastUpdated) * TIME_SLOWDOWN / 125;
+    let throughput = this.dstThroughputCounter / Math.max(now - this.dstLastUpdated, 1) * TIME_SLOWDOWN / BPMS_PER_MBPS;
     let avg = this.pushRawAndGetAvg(throughput, this.dstThroughputRaw);
 
     this.dstThroughputStats.push({
