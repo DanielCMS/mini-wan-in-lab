@@ -12,10 +12,6 @@ export class PanelsComponent implements OnInit {
 
   @Input() canvasOffset: Vector;
 
-  private Router = Router;
-  private Link = Link;
-  private Host = Host;
-
   constructor(private panelRegistry: PanelRegistry) { }
 
   ngOnInit() {
