@@ -90,6 +90,8 @@ export interface Flow {
   maxAckDup: number;
   flowStatus: FlowStatus;
   onReceive(packet: Packet): void;
+  getRTT(): number;
+  getRTTMin(): number;
 }
 
 export interface CongestionControlAlg {
