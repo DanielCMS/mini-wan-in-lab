@@ -35,10 +35,8 @@ export class FlowProvider implements Flow {
     //    this.initTime = Date.now();
     if (this.sendingHost.algorithm === AlgType[AlgType.Reno]) {
       this.congestionControl = new Reno(this);
-      console.log('Reno is in use');
     } else if (this.sendingHost.algorithm === AlgType[AlgType.Vegas]) {
       this.congestionControl = new Vegas(this);
-      console.log('Vegas is in use');
     }
 
 
@@ -68,7 +66,6 @@ export class FlowProvider implements Flow {
       this.RTT = RTT;
       this.RTTMin = RTT;
     }
-    console.log('new RTT', this.RTT);
   }
 
   private updateRTO(): void {
@@ -135,15 +132,6 @@ export class FlowProvider implements Flow {
   }
 
   private onReceiveNewAck(): void {
-    if (this.flowStatus === FlowStatus.SS) {
-      this.cwnd++;
-
-      if (this.cwnd >= this.ssthresh) {
-        this.flowStatus = FlowStatus.CA;
-        console.log('Enter CA');
-      }
-    }
-
     this.restartRTO();
     this.congestionControl.onReceiveNewAck();
   }
