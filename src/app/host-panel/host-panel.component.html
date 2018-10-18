@@ -65,7 +65,7 @@
         <select
           class="select"
           [value]="newFlowAlg"
-          (changed)="newFlowAlg = $event">
+          (change)="newFlowAlg = $event.target.value">
           <option
             *ngFor="let alg of algs"
             [value]="alg">
