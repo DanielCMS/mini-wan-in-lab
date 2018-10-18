@@ -1,5 +1,7 @@
 <input
   #input
+  class="input"
+  [placeholder]="placeholder"
   [value]="value"
   (keyup.enter)="input.value=process(input.value)"
   (blur)="input.value=process(input.value)"

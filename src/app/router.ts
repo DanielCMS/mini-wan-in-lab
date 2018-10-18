@@ -142,28 +142,28 @@ export class RouterProvider extends BaseDevice implements Router {
   }
 
   public advertiseNewLink(link: Link): void {
-    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
+    let packet = new Packet('0', BROADCAST_IP, BROADCAST_IP, PacketType.LinkUp,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLinkRemoval(link: Link): void {
-    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
+    let packet = new Packet('0', BROADCAST_IP, BROADCAST_IP, PacketType.LinkDown,
       0, OSPF_SIZE, link);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsdb(link: Link): void {
-    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet('0', BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, this.lsdb);
 
     this.broadcast(packet, [link]);
   }
 
   public advertiseLsa(link: Link): void {
-    let packet = new Packet(0, BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
+    let packet = new Packet('0', BROADCAST_IP, BROADCAST_IP, PacketType.LSA, 0,
       OSPF_SIZE, []);
 
     this.broadcast(packet, []);

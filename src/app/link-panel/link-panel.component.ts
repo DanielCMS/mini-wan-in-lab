@@ -1,8 +1,10 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { Link } from '../network-devices';
 import { Vector } from '../vector';
+import { processToPosInt, processToPercent } from '../processors';
 
 const Y_OFFSET = 100;
+const WINDOW_MARGIN = 230;
 
 @Component({
   selector: 'app-link-panel',
@@ -22,8 +24,8 @@ export class LinkPanelComponent implements OnInit {
 
   ngOnInit() {
     this.anchor = {
-      x: Math.min((this.model.src.position.x + this.model.dst.position.x) / 2 + this.canvasOffset.x, window.innerWidth - 230),
-      y: Math.min((this.model.src.position.y + this.model.dst.position.y) / 2 + this.canvasOffset.y + Y_OFFSET, window.innerHeight - 230),
+      x: Math.min((this.model.src.position.x + this.model.dst.position.x) / 2 + this.canvasOffset.x, window.innerWidth - WINDOW_MARGIN),
+      y: Math.min((this.model.src.position.y + this.model.dst.position.y) / 2 + this.canvasOffset.y + Y_OFFSET, window.innerHeight - WINDOW_MARGIN),
     };
   }
 
@@ -31,24 +33,7 @@ export class LinkPanelComponent implements OnInit {
     this.close.emit();
   }
 
-  private processToPosInt(input: string, fallback: string): string {
-    let normalized = parseInt(input);
-
-    if (!isNaN(normalized) && normalized > 0) {
-      return normalized.toString();
-    } else {
-      return fallback;
-    }
-  }
-
-  private processToPercent(input: string, fallback: string): string {
-    let normalized = parseFloat(input);
-
-    if (isNaN(normalized)) {
-      return fallback;
-    } else {
-      return Math.max(Math.min(normalized, 100), 0).toString();
-    }
-  }
+  private processToPosInt = processToPosInt;
+  private processToPercent = processToPercent;
 
 }

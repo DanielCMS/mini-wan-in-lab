@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { PanelRegistry } from '../panel-registry.service';
-import { Link, Router, Host, Device } from '../network-devices';
+import { Link, Router, Host, Device, Flow } from '../network-devices';
 import { Vector } from '../vector';
  
 @Component({
@@ -17,11 +17,11 @@ export class PanelsComponent implements OnInit {
   ngOnInit() {
   }
 
-  closePanel(element: Device | Link) {
+  closePanel(element: Device | Link | Flow) {
     this.panelRegistry.closePanelFor(element);
   }
 
-  bringToTop(element: Device | Link) {
+  bringToTop(element: Device | Link | Flow) {
     this.panelRegistry.bringToTop(element);
   }
 

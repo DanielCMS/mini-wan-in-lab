@@ -17,7 +17,7 @@ export class Packet {
   private TSval: number; // Time Stamp Value  see https://tools.ietf.org/html/rfc1323#section-3
   private TSecr: number; // Time Stamp Echo
 
-  constructor(public flowId:number, public srcIp: string, public dstIp: string, public type: PacketType,
+  constructor(public flowId: string, public srcIp: string, public dstIp: string, public type: PacketType,
     public sequenceNumber: number, public size: number, public payload?: any) {
     if (type === PacketType.Payload || type === PacketType.Syn) {
       this.setTSval(Date.now());
@@ -38,7 +38,7 @@ export class Packet {
     return this.receivedTime - this.sentTime;
   }
 
-  public getFlowId(): number {
+  public getFlowId(): string {
     return this.flowId;
   }
 

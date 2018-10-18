@@ -1,54 +1,68 @@
 import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
-  ALPHA, BETA, MIN_RTO, MEGA } from './constants';
+  ALPHA, BETA, MIN_RTO, BYTES_PER_MB } from './constants';
 import { Packet, PacketType } from './packet';
+import { SeriesPoint } from './series-point';
 import { AlgType, Flow, CongestionControlAlg, FlowStatus, Host } from './network-devices';
-import { Reno, Vegas } from './congestion-control';
+import { Tahoe, Reno, Vegas, FAST } from './congestion-control';
+
+const COUNTDOWN_INTERVAL = 1000;
 
 export class FlowProvider implements Flow {
-//  private initTime: number;
-  private waitingTime: number;
   private flowSource: string;
   private flowDestination: string;
   private dataRemaining: number;
-  private algorithm: AlgType;
   private RTT: number;
   private RTTMin: number;
   private RTO: number;
   private windowStart: number = 0;
-  private toSend: number;
   private maxAck: number = 0;
   private seqNum: number = 0;
   private packetsOnFly: Packet[] = [];
   private congestionControl: CongestionControlAlg;
   private RTOTimer: number;
 
+  public isFlow: boolean = true;
   public flowStatus: FlowStatus = FlowStatus.Waiting;
   public cwnd: number = 1;
   public maxAckDup: number = 0;
   public ssthresh: number = SSTHRESH_INIT;
 
-  constructor(public flowId: number, public sendingHost: Host, public destIP: string, public data: number, public time: number) {
+  public rateStats: SeriesPoint[][] = [];
+  public cwndStats: SeriesPoint[][] = [];
+  public rttStats: SeriesPoint[][] = [];
+
+  constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, private algorithm: AlgType, private countdown: number) {
     this.flowSource = sendingHost.getIp();
     this.flowDestination = destIP + "/24";
-    this.dataRemaining = data * MEGA; // in Bytes
-    this.waitingTime = time;
-    //    this.initTime = Date.now();
-    if (this.sendingHost.algorithm === AlgType[AlgType.Reno]) {
+    this.dataRemaining = data * BYTES_PER_MB; // in Bytes
+    this.updateAlg(algorithm);
+
+    this.countDown();
+  }
+
+  public updateAlg(alg: AlgType): void {
+    this.algorithm = alg;
+
+    if (alg === AlgType.Tahoe) {
+      this.congestionControl = new Tahoe(this);
+    } else if (alg === AlgType.Reno) {
       this.congestionControl = new Reno(this);
-    } else if (this.sendingHost.algorithm === AlgType[AlgType.Vegas]) {
+    } else if (alg === AlgType.Vegas) {
       this.congestionControl = new Vegas(this);
+    } else if (alg === AlgType.FAST) {
+      this.congestionControl = new FAST(this);
     }
-
-
-    for (let n = 0; n < time; n++) {
-      setTimeout(() => this.countDown(), (n + 1) * 1000);
-    }
-
-    setTimeout(() => this.handShake(), time * 1000);
   }
 
   private countDown(): void {
-    this.waitingTime--;
+    if (this.countdown > 0) {
+      setTimeout(() => {
+        this.countDown();
+        this.countdown--;
+      }, COUNTDOWN_INTERVAL);
+    } else {
+      this.handShake();
+    }
   }
 
   private handShake(): void {

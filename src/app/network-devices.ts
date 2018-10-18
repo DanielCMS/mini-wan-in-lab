@@ -17,10 +17,8 @@ export interface Host extends Device {
   isHost: boolean;
   flowList: Flow[];
   receiveList: FlowReceived[];
-  algorithm: string;
-  hasInvalidFormat: boolean;
   getIp(): string;
-  addNewFlow(dest: string, data: number, startTime: number): void;
+  addNewFlow(dest: string, data: number, algorithm: AlgType, startTime: number): void;
   receivePacket(packet: Packet, link: Link): void;
   sendPacket(packet: Packet): void;
 }
@@ -84,12 +82,18 @@ export class Route {
 }
 
 export interface Flow {
-  flowId: number;
+  isFlow: boolean;
+  flowId: string;
   cwnd: number;
   ssthresh: number;
   maxAckDup: number;
+  sendingHost: Host;
+  rateStats: SeriesPoint[][];
+  cwndStats: SeriesPoint[][];
+  rttStats: SeriesPoint[][];
   flowStatus: FlowStatus;
   onReceive(packet: Packet): void;
+  updateAlg(alg: AlgType): void;
   getRTT(): number;
   getRTTMin(): number;
 }
@@ -100,7 +104,7 @@ export interface CongestionControlAlg {
 }
 
 export interface FlowReceived {
-  flowId: number; // id of the received flow
+  flowId: string; // id of the received flow
   rwnd: number; // Receive window size
   pktRecieved: number[]; // seq numbers of received packets
   nextAck: number; // seq number of the the next Ack packet
@@ -109,10 +113,10 @@ export interface FlowReceived {
 }
 
 export enum AlgType {
-  Tahoe,
-  Reno,
-  Vegas,
-  FAST
+  Tahoe = 'Tahoe',
+  Reno = 'Reno',
+  Vegas = 'Vegas',
+  FAST = 'FAST'
 }
 
 export enum FlowStatus {

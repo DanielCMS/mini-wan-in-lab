@@ -23,4 +23,12 @@
     (mousedown)="bringToTop(element)"
   >
   </app-link-panel>
+  <app-flow-panel
+    *ngIf="element.isFlow"
+    [model]="element"
+    [canvasOffset]="canvasOffset"
+    (close)="closePanel(element)"
+    (mousedown)="bringToTop(element)"
+  >
+  </app-flow-panel>
 </div>

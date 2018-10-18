@@ -102,7 +102,7 @@ export class LinkProvider implements Link {
     if (source === this.src) {
       let newSrcBufferSize = this.srcBufferUsed + packet.size;
 
-      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB && isRouter(source)) {
+      if (newSrcBufferSize > this.bufferSize * BYTES_IN_KB) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
 
         return;
@@ -118,7 +118,7 @@ export class LinkProvider implements Link {
     } else {
       let newDstBufferSize = this.dstBufferUsed + packet.size;
 
-      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB && isRouter(source)) {
+      if (newDstBufferSize > this.bufferSize * BYTES_IN_KB) {
         console.log(`Dropping packets at ${this.id} due to buffer overflow.`);
 
         return;

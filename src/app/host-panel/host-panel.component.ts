@@ -1,7 +1,9 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Host } from '../network-devices';
+import { Host, Flow, FlowStatus, AlgType } from '../network-devices';
+import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
-import { FeedbackService } from '../feedback.service';
+import { BYTES_PER_MB } from '../constants';
+import { processToIp, processToPosInt } from '../processors';
 
 const X_OFFSET = 100;
 
@@ -17,26 +19,53 @@ export class HostPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   private anchor: Vector;
+  private BYTES_PER_MB = BYTES_PER_MB;
+  private FlowStatus = FlowStatus;
 
-  constructor(private feedback: FeedbackService) { }
+  private addingNewFlow: boolean;
+  private newFlowDest: string;
+  private newFlowDataAmount: string;
+  private newFlowCountdown: string;
+  private newFlowAlg: string;
+  private algs: string[];
+
+  constructor(private panelRegistry: PanelRegistry) { }
+
+  private processToPosInt = processToPosInt;
+  private processToIp = processToIp;
 
   ngOnInit() {
     this.anchor = {
       x: Math.min(this.model.position.x + this.canvasOffset.x + X_OFFSET, window.innerWidth - 230),
       y: Math.min(this.model.position.y + this.canvasOffset.y, window.innerHeight - 230)
     };
+    this.algs = Object.keys(AlgType);
+    this.resetNewFlow();
+  }
+
+  private toggleAddNewFlow(): void {
+    this.addingNewFlow = !this.addingNewFlow;
+  }
+
+  private openFlowPanel(flow: Flow): void {
+    this.panelRegistry.openPanelFor(flow);
   }
 
   private closePanel(): void {
     this.close.emit();
   }
 
-  private addNewFlow(dest: string, data: number, startTime: number): void {
-    this.model.addNewFlow(dest, data, startTime);
-    if (this.model.hasInvalidFormat) {
-      this.feedback.sendError("Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).");
-      this.model.hasInvalidFormat = false;
-    }
+  private addNewFlow(): void {
+    this.model.addNewFlow(this.newFlowDest, +this.newFlowDataAmount, <AlgType>this.newFlowAlg, +this.newFlowCountdown);
+    this.resetNewFlow();
+  }
+
+  private resetNewFlow() {
+    this.addingNewFlow = false;
+    this.newFlowDest = "";
+    this.newFlowDataAmount = "5";
+    this.newFlowCountdown = "5";
+    this.newFlowAlg = this.algs[0];
   }
 
 }
