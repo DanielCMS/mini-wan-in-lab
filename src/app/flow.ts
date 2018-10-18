@@ -1,4 +1,4 @@
-import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
+import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, SSTHRESH_INIT,
   AVG_LENGTH, ALPHA, BETA, MIN_RTO, BYTES_PER_MB, MAX_STATS_LENGTH,
   BPMS_PER_MBPS, TIME_SLOWDOWN } from './constants';
 import { Packet, PacketType } from './packet';
@@ -102,7 +102,9 @@ export class FlowProvider implements Flow {
   }
 
   private pushRawAndGetAvg(value: number, raw: number[]): number {
-    raw.push(value);
+    if (value) {
+      raw.push(value);
+    }
 
     if (raw.length > AVG_LENGTH) {
       raw.shift();

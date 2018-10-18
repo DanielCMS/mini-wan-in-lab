@@ -105,11 +105,7 @@ export interface CongestionControlAlg {
 
 export interface FlowReceived {
   flowId: string; // id of the received flow
-  rwnd: number; // Receive window size
-  pktReceived: number[]; // seq numbers of received packets
-  nextAck: number; // seq number of the the next Ack packet
   onReceive(packet: Packet): void;
-  getAckSeqNum(): number;
 }
 
 export enum AlgType {

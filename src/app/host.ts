@@ -43,7 +43,7 @@ export class HostProvider extends BaseDevice implements Host {
     let flowId = packet.getFlowId();
 
     if (packet.type === PacketType.Syn) {
-      let flow = new FlowReceivedProvider(flowId);
+      let flow = new FlowReceivedProvider(flowId, this);
 
       this.receiveList.push(flow); // Establish the session
 
@@ -54,44 +54,25 @@ export class HostProvider extends BaseDevice implements Host {
       return;
     }
 
-    if (packet.type === PacketType.SynAck) {
-      let flows = this.flowList.filter(r => r.flowId === flowId);
+    if (packet.type === PacketType.SynAck || packet.type === PacketType.Ack) {
+      for (let flow of this.flowList) {
+        if (flow.flowId === flowId) {
+          flow.onReceive(packet);
 
-      if (flows.length > 0){
-        let flow = flows[0];
-
-        flow.onReceive(packet);
+          return;
+        }
       }
-
-      return;
     }
 
     if (packet.type === PacketType.Payload) {
-      let flows = this.receiveList.filter(r => r.flowId === flowId);
+      for (let flow of this.receiveList) {
+        if (flow.flowId === flowId) {
+          flow.onReceive(packet);
 
-      if (flows.length > 0) {
-        let flow = flows[0];
-
-        flow.onReceive(packet);
-
-        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE, packet.getTSval());
-
-        setTimeout(()=>this.sendPacket(pkt));
+          return;
+        }
       }
-      return;
     }
-
-    if (packet.type === PacketType.Ack) {
-      let flows = this.flowList.filter(r => r.flowId === flowId);
-
-      if (flows.length > 0) {
-        let flow = flows[0];
-        flow.onReceive(packet);
-      }
-      return;
-    }
-
-    // Send ack packet here
   }
 
   public sendPacket(packet: Packet): void {

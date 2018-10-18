@@ -8,7 +8,6 @@ export const PAYLOAD_SIZE = PKT_SIZE - HEADER_SIZE;
 export const MAX_STATS_LENGTH = 80;
 export const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
 
-export const RWND_INIT = Number.MAX_VALUE;
 export const SSTHRESH_INIT = Number.MAX_VALUE;
 
 export const ALPHA = 0.125;
