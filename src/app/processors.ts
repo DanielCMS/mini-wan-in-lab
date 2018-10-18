@@ -10,6 +10,16 @@ export function processToPosInt(input: string, fallback: string): string {
   }
 }
 
+export function processToPos(input: string, fallback: string): string {
+  let normalized = parseFloat(input);
+
+  if (!isNaN(normalized) && normalized > 0) {
+    return normalized.toString();
+  } else {
+    return fallback;
+  }
+}
+
 export function processToPercent(input: string, fallback: string): string {
   let normalized = parseFloat(input);
 

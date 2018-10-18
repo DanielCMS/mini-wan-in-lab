@@ -1,5 +1,5 @@
 import * as Deque from 'double-ended-queue';
-import { TIME_SLOWDOWN } from './constants';
+import { TIME_SLOWDOWN, AVG_LENGTH, MAX_STATS_LENGTH, BPMS_PER_MBPS } from './constants';
 import { SeriesPoint } from './series-point';
 import { Packet, PacketType } from './packet';
 import { Device, Router, Host, Link, isRouter, isHost } from './network-devices';
@@ -11,10 +11,7 @@ const DEFAULT_BUFFER_SIZE = 64;
 const DEFAULT_METRIC = 100;
 const BYTES_IN_KB = 1000;
 const BYTES_PER_MBPS = 125000;
-const BPMS_PER_MBPS = 125;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
-const MAX_STATS_LENGTH = 80;
-const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
 
 export class LinkProvider implements Link {
   public isLink: boolean = true;

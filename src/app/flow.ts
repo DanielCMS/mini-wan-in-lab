@@ -1,13 +1,16 @@
 import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
-  ALPHA, BETA, MIN_RTO, BYTES_PER_MB } from './constants';
+  ALPHA, BETA, MIN_RTO, BYTES_PER_MB, AVG_LENGTH, MAX_STATS_LENGTH,
+  BPMS_PER_MBPS, TIME_SLOWDOWN } from './constants';
 import { Packet, PacketType } from './packet';
 import { SeriesPoint } from './series-point';
 import { AlgType, Flow, CongestionControlAlg, FlowStatus, Host } from './network-devices';
 import { Tahoe, Reno, Vegas, FAST } from './congestion-control';
 
 const COUNTDOWN_INTERVAL = 1000;
+const STATS_UPDATE_INTERVAL = 1000;
 
 export class FlowProvider implements Flow {
+
   private flowSource: string;
   private flowDestination: string;
   private dataRemaining: number;
@@ -30,6 +33,18 @@ export class FlowProvider implements Flow {
   public rateStats: SeriesPoint[][] = [];
   public cwndStats: SeriesPoint[][] = [];
   public rttStats: SeriesPoint[][] = [];
+
+  private rateCounter: number = 0;
+  private cwndData: number[] = [];
+  private rttData: number[] = [];
+  private lastUpdated: number;
+  private _rateStats: SeriesPoint[] = [];
+  private _cwndStats: SeriesPoint[] = [];
+  private _rttStats: SeriesPoint[] = [];
+
+  private rateRaw: number[] = [];
+  private cwndRaw: number[] = [];
+  private rttRaw: number[] = [];
 
   constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, private algorithm: AlgType, private countdown: number) {
     this.flowSource = sendingHost.getIp();
@@ -70,6 +85,80 @@ export class FlowProvider implements Flow {
     let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
 
     setTimeout(() => this.sendingHost.sendPacket(packet));
+    this.updateStats();
+  }
+
+  private pushRawAndGetAvg(value: number, raw: number[]): number {
+    raw.push(value);
+
+    if (raw.length > AVG_LENGTH) {
+      raw.shift();
+    }
+
+    return raw.reduce((last, next) => last + next, 0) / Math.max(raw.length, 1);
+  }
+
+  private updateStats(): void {
+    let now = Date.now();
+
+    // Update rtt
+    let rttAvg = this.rttData
+      .reduce((last, next) => last + next, 0) / Math.max(this.rttData.length, 1);
+
+    this.pushRawAndGetAvg(rttAvg, this.rttRaw);
+
+    this._rttStats.push({
+      time: now,
+      value: rttAvg
+    });
+
+    if (this._rttStats.length > MAX_STATS_LENGTH) {
+      this._rttStats.shift();
+    }
+
+    this.rttData = [];
+    this.rttStats = [this._rttStats];
+
+    // Update cwnd
+    let cwndAvg = this.cwndData
+      .reduce((last, next) => last + next, 0) / Math.max(this.cwndData.length, 1);
+
+    this.pushRawAndGetAvg(cwndAvg, this.cwndRaw);
+
+    this._cwndStats.push({
+      time: now,
+      value: cwndAvg
+    });
+
+    if (this._cwndStats.length > MAX_STATS_LENGTH) {
+      this._cwndStats.shift();
+    }
+
+    this.cwndData = [];
+    this.cwndStats = [this._cwndStats];
+
+    // Update rate
+    let rate = this.rateCounter / Math.max(now - this.lastUpdated, 1) * TIME_SLOWDOWN / BPMS_PER_MBPS;
+    let avg = this.pushRawAndGetAvg(rate, this.rateRaw);
+
+    this._rateStats.push({
+      time: now,
+      value: avg
+    });
+
+    if (this._rateStats.length > MAX_STATS_LENGTH) {
+      this._rateStats.shift();
+    }
+
+    this.lastUpdated = now;
+    this.rateCounter = 0;
+    this.rateStats = [this._rateStats];
+
+    // Schedule a future updates
+    setTimeout(() => {
+      this.updateStats();
+    }, STATS_UPDATE_INTERVAL);
+
   }
 
   private updateRTT(RTT: number): void {
@@ -91,7 +180,9 @@ export class FlowProvider implements Flow {
       let ack = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
 
       setTimeout(() => this.sendingHost.sendPacket(ack));
+
       let RTT = Date.now() - packet.getTSecr();
+
       this.updateRTT(RTT);
       this.updateRTO();
       this.flowStatus = FlowStatus.SS;
@@ -99,6 +190,7 @@ export class FlowProvider implements Flow {
 
     if (packet.type === PacketType.Ack) {
       let RTT = Date.now() - packet.getTSecr();
+
       this.updateRTT(RTT);
       this.updateRTO();
       this.windowStart = packet.sequenceNumber;
@@ -121,6 +213,9 @@ export class FlowProvider implements Flow {
       }
     }
 
+    this.rateCounter = this.rateCounter + PAYLOAD_SIZE;
+    this.cwndData.push(this.cwnd);
+    this.rttData.push(this.RTT);
     this.send();
   }
 
