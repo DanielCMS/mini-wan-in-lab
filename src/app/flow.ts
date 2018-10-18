@@ -2,21 +2,21 @@ import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
   ALPHA, BETA, MIN_RTO, MEGA } from './constants';
 import { Packet, PacketType } from './packet';
 import { AlgType, Flow, CongestionControlAlg, FlowStatus, Host } from './network-devices';
-import { Reno } from './congestion-control';
+import { Reno, Vegas } from './congestion-control';
 
 export class FlowProvider implements Flow {
-  private initTime: number;
+//  private initTime: number;
   private waitingTime: number;
   private flowSource: string;
   private flowDestination: string;
   private dataRemaining: number;
   private algorithm: AlgType;
   private RTT: number;
+  private RTTMin: number;
   private RTO: number;
   private windowStart: number = 0;
   private toSend: number;
   private maxAck: number = 0;
-  private timeSYN: number;
   private seqNum: number = 0;
   private packetsOnFly: Packet[] = [];
   private congestionControl: CongestionControlAlg;
@@ -32,8 +32,13 @@ export class FlowProvider implements Flow {
     this.flowDestination = destIP + "/24";
     this.dataRemaining = data * MEGA; // in Bytes
     this.waitingTime = time;
-    this.initTime = Date.now();
-    this.congestionControl = new Reno(this);
+    //    this.initTime = Date.now();
+    if (this.sendingHost.algorithm === AlgType[AlgType.Reno]) {
+      this.congestionControl = new Reno(this);
+    } else if (this.sendingHost.algorithm === AlgType[AlgType.Vegas]) {
+      this.congestionControl = new Vegas(this);
+    }
+
 
     for (let n = 0; n < time; n++) {
       setTimeout(() => this.countDown(), (n + 1) * 1000);
@@ -48,7 +53,6 @@ export class FlowProvider implements Flow {
 
   private handShake(): void {
     this.flowStatus = FlowStatus.HandShake;
-    this.timeSYN = Date.now();
     let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
 
     setTimeout(() => this.sendingHost.sendPacket(packet));
@@ -57,8 +61,10 @@ export class FlowProvider implements Flow {
   private updateRTT(RTT: number): void {
     if (this.RTT) {
       this.RTT = (1 - ALPHA) * this.RTT + ALPHA * RTT;
+      this.RTTMin  =Math.min(this.RTTMin, RTT);
     } else {
       this.RTT = RTT;
+      this.RTTMin = RTT;
     }
   }
 
@@ -71,13 +77,16 @@ export class FlowProvider implements Flow {
       let ack = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
 
       setTimeout(() => this.sendingHost.sendPacket(ack));
-
-      this.updateRTT(Date.now() - this.timeSYN);
+      let RTT = Date.now() - packet.getTSecr();
+      this.updateRTT(RTT);
       this.updateRTO();
       this.flowStatus = FlowStatus.SS;
     }
 
     if (packet.type === PacketType.Ack) {
+      let RTT = Date.now() - packet.getTSecr();
+      this.updateRTT(RTT);
+      this.updateRTO();
       this.windowStart = packet.sequenceNumber;
       this.packetsOnFly = this.packetsOnFly.filter(pkt => pkt.sequenceNumber >= packet.sequenceNumber);
 
@@ -123,14 +132,6 @@ export class FlowProvider implements Flow {
   }
 
   private onReceiveNewAck(): void {
-    if (this.flowStatus === FlowStatus.SS) {
-      this.cwnd++;
-
-      if (this.cwnd >= this.ssthresh) {
-        this.flowStatus = FlowStatus.CA;
-      }
-    }
-
     this.restartRTO();
     this.congestionControl.onReceiveNewAck();
   }
@@ -194,5 +195,13 @@ export class FlowProvider implements Flow {
     this.seqNum = this.maxAck;
 
     this.send();
+  }
+
+  public getRTT(): number {
+    return this.RTT;
+  }
+
+  public getRTTMin(): number {
+    return this.RTTMin;
   }
 }

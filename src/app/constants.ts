@@ -14,3 +14,8 @@ export const ALPHA = 0.125;
 export const BETA = 2; // RTO = BETA * RTT
 export const MEGA = 1000 * 1000; // 1 MB = 1000 * 1000 Byte
 export const MIN_RTO = 100 * TIME_SLOWDOWN; // 100ms lower bound
+
+// para,eters for Vegas
+export const VEGAS_ALPHA = 0.0003;
+export const VEGAS_BETA = 0.0006;
+export const VEGAS_GAMMA = VEGAS_BETA;
