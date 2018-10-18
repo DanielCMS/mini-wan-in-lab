@@ -1,4 +1,4 @@
-export const TIME_SLOWDOWN = 30;
+export const TIME_SLOWDOWN = 60;
 export const BROADCAST_IP = "0.0.0.0";
 export const OSPF_SIZE = 1000;  // 1KB
 export const PKT_SIZE = 1000;  // 1KB
@@ -17,6 +17,6 @@ export const MIN_RTO = 500 * TIME_SLOWDOWN; // 500ms lower bound
 export const BPMS_PER_MBPS = 125;
 
 // parameters for Vegas
-export const VEGAS_ALPHA = 0.3 / TIME_SLOWDOWN;
-export const VEGAS_BETA = 0.6 / TIME_SLOWDOWN;
+export const VEGAS_ALPHA = 0.2 / TIME_SLOWDOWN;
+export const VEGAS_BETA = 0.2 / TIME_SLOWDOWN;
 export const VEGAS_GAMMA = VEGAS_BETA;
