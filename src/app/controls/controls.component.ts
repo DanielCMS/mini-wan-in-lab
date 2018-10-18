@@ -21,28 +21,28 @@ export class ControlsComponent implements OnInit {
   ngOnInit() {
   }
 
-  private isAdding(): boolean {
+  public isAdding(): boolean {
     return [CanvasStatus.AddingRouter, CanvasStatus.AddingHost,
       CanvasStatus.AddingLink].includes(this.canvasStatus);
   }
 
-  private elementSelected(): boolean {
+  public elementSelected(): boolean {
     return !!this.activeDeviceId;
   }
 
-  private addRouter(): void {
+  public addRouter(): void {
     this.addRouterClicked.emit();
   }
 
-  private addHost(): void {
+  public addHost(): void {
     this.addHostClicked.emit();
   }
 
-  private addLink(): void {
+  public addLink(): void {
     this.addLinkClicked.emit();
   }  
 
-  private delete(): void {
+  public delete(): void {
     this.deleteClicked.emit();
   }
 }

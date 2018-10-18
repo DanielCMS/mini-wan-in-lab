@@ -17,10 +17,10 @@ export class FlowPanelComponent implements OnInit {
   @Input() canvasOffset: Vector;
   @Output() close = new EventEmitter<void>();
 
-  private anchor: Vector;
-  private window = window;
-  private algs: string[] = Object.keys(AlgType);
-  private BYTES_PER_MB = BYTES_PER_MB;
+  public anchor: Vector;
+  public window = window;
+  public algs: string[] = Object.keys(AlgType);
+  public BYTES_PER_MB = BYTES_PER_MB;
 
   constructor() { }
 
@@ -31,7 +31,7 @@ export class FlowPanelComponent implements OnInit {
     };
   }
 
-  private closePanel(): void {
+  public closePanel(): void {
     this.close.emit();
   }
 

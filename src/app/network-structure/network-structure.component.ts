@@ -19,10 +19,10 @@ export class NetworkStructureComponent implements OnInit, OnChanges {
   @Input() activeDeviceId: string;
 
   private linkTemp: Link;
-  private tmpDevice: Device;
   private tmpDeviceId: string;
   private targetPosition: Vector;
   private CanvasStatus = CanvasStatus;
+  public tmpDevice: Device;
 
   private mouseDownPosition: Vector;
   private mouseDownId: string;
@@ -33,7 +33,7 @@ export class NetworkStructureComponent implements OnInit, OnChanges {
   private followTargetStart$ = new Subject<void>();
   private followTargetStop$ = new Subject<void>();
 
-  constructor(private deviceRegistry: DeviceRegistry) {
+  constructor(public deviceRegistry: DeviceRegistry) {
   }
 
   ngOnInit() {

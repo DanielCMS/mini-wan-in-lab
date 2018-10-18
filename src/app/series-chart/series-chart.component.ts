@@ -67,15 +67,15 @@ const STROKE_WIDTH = 2;
 })
 export class SeriesChartComponent implements OnInit, OnChanges {
 
-  private id: string;
   @Input() data: SeriesPoint[][];
   @Input() xAxisWidth: number;
   @Input() yAxisLength: number;
 
-  private xAxisLength: number;
-  private yAxisAdjusted: number;
-  private Y_LABEL_MARGIN: number = Y_LABEL_MARGIN;
-  private TOP_MARGIN: number = TOP_MARGIN;
+  public id: string;
+  public xAxisLength: number;
+  public yAxisAdjusted: number;
+  public Y_LABEL_MARGIN: number = Y_LABEL_MARGIN;
+  public TOP_MARGIN: number = TOP_MARGIN;
 
   constructor() {
     // The prefix is needed to make it a valid id

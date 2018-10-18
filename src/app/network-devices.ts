@@ -4,6 +4,7 @@ import { Packet, PacketType } from './packet';
 
 export interface Device {
   id: string;
+  label: string;
   interfaces: Interface[];
   position: Vector;
 
@@ -88,6 +89,9 @@ export interface Flow {
   ssthresh: number;
   maxAckDup: number;
   sendingHost: Host;
+  dataRemaining: number;
+  flowDestination: string;
+  algorithm: AlgType;
   rateStats: SeriesPoint[][];
   cwndStats: SeriesPoint[][];
   rttStats: SeriesPoint[][];

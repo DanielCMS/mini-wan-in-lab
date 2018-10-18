@@ -17,7 +17,7 @@ export class InputComponent implements OnInit {
   ngOnInit() {
   }
 
-  private process(value: string): string {
+  public process(value: string): string {
     let processed = this.processor(value, this.value);
 
     if (processed !== this.value) {

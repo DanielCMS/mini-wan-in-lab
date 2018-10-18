@@ -12,7 +12,7 @@ export class PanelsComponent implements OnInit {
 
   @Input() canvasOffset: Vector;
 
-  constructor(private panelRegistry: PanelRegistry) { }
+  constructor(public panelRegistry: PanelRegistry) { }
 
   ngOnInit() {
   }

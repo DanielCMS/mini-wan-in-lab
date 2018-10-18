@@ -13,8 +13,6 @@ const SAMPLE_INTERVAL = 250;
 export class FlowProvider implements Flow {
 
   private flowSource: string;
-  private flowDestination: string;
-  private dataRemaining: number;
   private RTT: number;
   private RTTMin: number;
   private RTO: number;
@@ -27,6 +25,8 @@ export class FlowProvider implements Flow {
   private sampleTimer: number;
   private statsTimer: number;
 
+  public dataRemaining: number;
+  public flowDestination: string;
   public isFlow: boolean = true;
   public flowStatus: FlowStatus = FlowStatus.Waiting;
   public cwnd: number = 1;
@@ -49,7 +49,7 @@ export class FlowProvider implements Flow {
   private cwndRaw: number[] = [];
   private rttRaw: number[] = [];
 
-  constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, private algorithm: AlgType, private countdown: number) {
+  constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, public algorithm: AlgType, private countdown: number) {
     this.flowSource = sendingHost.getIp();
     this.flowDestination = destIP + "/24";
     this.dataRemaining = data * BYTES_PER_MB; // in Bytes
