@@ -47,7 +47,7 @@ export class HostProvider extends BaseDevice implements Host {
 
       this.receiveList.push(flow); // Establish the session
 
-      let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE);
+      let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.SynAck, 0, CTL_SIZE, packet.getTSval());
 
       setTimeout(() => this.sendPacket(pkt));
 
@@ -74,7 +74,7 @@ export class HostProvider extends BaseDevice implements Host {
 
         flow.onReceive(packet);
 
-        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
+        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE, packet.getTSval());
 
         setTimeout(()=>this.sendPacket(pkt));
       }

@@ -94,6 +94,8 @@ export interface Flow {
   flowStatus: FlowStatus;
   onReceive(packet: Packet): void;
   updateAlg(alg: AlgType): void;
+  getRTT(): number;
+  getRTTMin(): number;
 }
 
 export interface CongestionControlAlg {
