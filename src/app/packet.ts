@@ -21,7 +21,7 @@ export class Packet {
     public sequenceNumber: number, public size: number, public payload?: any) {
     if (type === PacketType.Payload || type === PacketType.Syn) {
       this.setTSval(Date.now());
-    } else if (type === PacketType.Ack && payload) {
+    } else if ((type === PacketType.Ack && sequenceNumber > 0) || type === PacketType.SynAck) {
       this.setTSecr(payload);
     }
   }

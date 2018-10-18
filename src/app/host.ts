@@ -84,7 +84,7 @@ export class HostProvider extends BaseDevice implements Host {
 
         flow.onReceive(packet);
 
-        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE);
+        let pkt = new Packet(flowId, this.getIp(), packet.srcIp, PacketType.Ack, flow.getAckSeqNum(), CTL_SIZE, packet.getTSval());
 
         setTimeout(()=>this.sendPacket(pkt));
       }

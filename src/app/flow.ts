@@ -55,7 +55,6 @@ export class FlowProvider implements Flow {
 
   private handShake(): void {
     this.flowStatus = FlowStatus.HandShake;
-//    this.timeSYN = Date.now();
     let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
 
     setTimeout(() => this.sendingHost.sendPacket(packet));
@@ -69,6 +68,7 @@ export class FlowProvider implements Flow {
       this.RTT = RTT;
       this.RTTMin = RTT;
     }
+    console.log('new RTT', this.RTT);
   }
 
   private updateRTO(): void {
