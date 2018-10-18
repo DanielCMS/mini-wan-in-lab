@@ -13,7 +13,7 @@ $check-color: $brand-success;
   border-radius: 10px;
   position: absolute;
   background: $white;
-  width: 230px;
+  width: 300px;
   padding: 15px;
   padding-top: 0px;
   font-size: 14px;
@@ -58,7 +58,7 @@ $check-color: $brand-success;
   }
 
   .title {
-    display: block;
+    display: inline-block;
     margin-top: 10px;
     font-size: 13px;
     font-family: Lato-Regular;
@@ -81,6 +81,51 @@ $check-color: $brand-success;
       font-family: Lato-Regular;
       font-size: 14px;
     }
+  }
+}
+
+.empty-row {
+  line-height: 15px;
+  height: 15px;
+}
+
+.scroll {
+  overflow-y: scroll;
+  max-height: 200px;
+  clear: both;
+  margin-top: 5px;
+
+  table {
+    margin-top: 0;
+  }
+}
+
+.new-flow {
+  td {
+    padding-right: 15px;
+  }
+}
+
+.toggle {
+  float: right;
+  color: $blue;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-family: Lato-Regular;
+
+  &.close {
+    font-size: 27px;
+    margin-top: 0;
+  }
+}
+
+.add-button {
+  float: right;
+  padding: 5px;
+
+  button {
+    cursor: pointer;
   }
 }
 
@@ -180,4 +225,3 @@ $check-color: $brand-success;
     opacity: 1;
   }
 }
-

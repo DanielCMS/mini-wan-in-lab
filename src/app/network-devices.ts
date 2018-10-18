@@ -84,12 +84,17 @@ export class Route {
 }
 
 export interface Flow {
-  flowId: number;
+  flowId: string;
   cwnd: number;
   ssthresh: number;
   maxAckDup: number;
+  sendingHost: Host;
+  rateStats: SeriesPoint[][];
+  cwndStats: SeriesPoint[][];
+  rttStats: SeriesPoint[][];
   flowStatus: FlowStatus;
   onReceive(packet: Packet): void;
+  updateAlg(alg: AlgType): void;
 }
 
 export interface CongestionControlAlg {
@@ -98,7 +103,7 @@ export interface CongestionControlAlg {
 }
 
 export interface FlowReceived {
-  flowId: number; // id of the received flow
+  flowId: string; // id of the received flow
   rwnd: number; // Receive window size
   pktRecieved: number[]; // seq numbers of received packets
   nextAck: number; // seq number of the the next Ack packet
@@ -107,10 +112,10 @@ export interface FlowReceived {
 }
 
 export enum AlgType {
-  Tahoe,
-  Reno,
-  Vegas,
-  FAST
+  Tahoe = 'Tahoe',
+  Reno = 'Reno',
+  Vegas = 'Vegas',
+  FAST = 'FAST'
 }
 
 export enum FlowStatus {

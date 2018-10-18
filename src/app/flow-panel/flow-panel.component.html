@@ -1,3 +1,74 @@
-<p>
-  flow-panel works!
-</p>
+<div
+  class="flow-panel"
+  [id]="'panel-' + model.id"
+  [style.top.px]="anchor.y"
+  [style.left.px]="anchor.x"
+  draggable
+  [dragHandle]="'#panel-' + model.id + ' .handle'"
+>
+  <div class="handle">
+    <img width="18" height="18" src="/assets/images/hub.svg" alt="">
+    <span class="title-text">{{model.label || 'New Flow'}}</span>
+    <span class="cross" (click)="closePanel()">✕</span>
+  </div>
+
+  <hr>
+
+  <span class="title">Details</span>
+  <table>
+    <tr>
+      <td width="50%">Destination</td>
+      <td width="50%">
+        <app-input
+          [value]="model.flowDestination"
+          [processor]="processToIp"
+          (changed)="model.flowDestination = $event"
+        ></app-input>
+      </td>
+    </tr>
+    <tr>
+      <td>TCP Algorithm</td>
+      <td>
+        <select [value]="model.algorithm" (changed)="model.updateAlg($event)">
+          <option
+            *ngFor="let alg of AlgType"
+            [value]="alg">{{alg}}
+          </option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Remaining Data</td>
+      <td>{{(model.dataRemaining / BYTES_PER_MB).toFixed(2)}}</td>
+    </tr>
+  </table>
+  <div class="scrollable">
+    <div class="monitor-title">
+      <img src="/assets/images/throughput-icon.svg">
+      Flow Rate (Mbps)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+      [data]="model.rateStats"
+    ></app-series-chart>
+    <div class="monitor-title">
+      <img src="/assets/images/latency-icon.svg">
+      Window Size
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+      [data]="model.cwndStats"
+    ></app-series-chart>
+    <div class="monitor-title">
+      <img src="/assets/images/packet-loss-icon.svg">
+      RTT (ms)
+    </div>
+    <app-series-chart
+      [xAxisWidth]="250"
+      [yAxisLength]="130"
+      [data]="model.rttStats"
+    ></app-series-chart>
+  </div>
+</div>

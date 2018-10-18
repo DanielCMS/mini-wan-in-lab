@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { Vector } from './vector';
-import { IPv4, CTL_SIZE } from './constants';
+import { CTL_SIZE } from './constants';
 import { Packet, PacketType } from './packet';
 import { BaseDevice } from './base-device';
 import { Host, Flow, Link, FlowReceived } from './network-devices';
@@ -11,8 +11,6 @@ export class HostProvider extends BaseDevice implements Host {
   public isHost: boolean = true;
   public flowList: Flow[] = [];
   public receiveList: FlowReceived[] = [];
-  public algorithm: string;
-  public hasInvalidFormat: boolean = false;
 
   constructor(public id: string, public label: string, public position: Vector) {
     super(id, label, position);
@@ -21,19 +19,10 @@ export class HostProvider extends BaseDevice implements Host {
       x: this.position.x - 12,
       y: this.position.y + 25
     };
-    this.algorithm = "Reno";
-
-    this.flowList = [];
-    this.receiveList = [];
   }
 
   public addNewFlow(dest: string, data: number, startTime: number): void {
-    if (IPv4.test(dest) && data > 0 && startTime >= 0) {
-      let id = v4();
-      this.flowList.push(new FlowProvider(id, this, dest, data, startTime));
-    } else {
-      this.hasInvalidFormat = true;
-    }
+    this.flowList.push(new FlowProvider(v4(), this, dest, data, startTime));
   }
 
   public getIp(): string {
@@ -79,6 +68,7 @@ export class HostProvider extends BaseDevice implements Host {
 
     if (packet.type === PacketType.Payload) {
       let flows = this.receiveList.filter(r => r.flowId === flowId);
+
       if (flows.length > 0) {
         let flow = flows[0];
 
@@ -93,6 +83,7 @@ export class HostProvider extends BaseDevice implements Host {
 
     if (packet.type === PacketType.Ack) {
       let flows = this.flowList.filter(r => r.flowId === flowId);
+
       if (flows.length > 0) {
         let flow = flows[0];
         flow.onReceive(packet);

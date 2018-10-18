@@ -1,7 +1,8 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Host } from '../network-devices';
+import { Host, FlowStatus } from '../network-devices';
 import { Vector } from '../vector';
-import { FeedbackService } from '../feedback.service';
+import { BYTES_PER_MB } from '../constants';
+import { processToIp, processToPosInt } from '../processors';
 
 const X_OFFSET = 100;
 
@@ -17,8 +18,18 @@ export class HostPanelComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   private anchor: Vector;
+  private BYTES_PER_MB = BYTES_PER_MB;
+  private FlowStatus = FlowStatus;
 
-  constructor(private feedback: FeedbackService) { }
+  private addingNewFlow: boolean = false;
+  private newFlowDest: string = "";
+  private newFlowDataAmount: string = "";
+  private newFlowCountdown: string = "";
+
+  constructor() { }
+
+  private processToPosInt = processToPosInt;
+  private processToIp = processToIp;
 
   ngOnInit() {
     this.anchor = {
@@ -27,16 +38,24 @@ export class HostPanelComponent implements OnInit {
     };
   }
 
+  private toggleAddNewFlow(): void {
+    this.addingNewFlow = !this.addingNewFlow;
+  }
+
   private closePanel(): void {
     this.close.emit();
   }
 
-  private addNewFlow(dest: string, data: number, startTime: number): void {
-    this.model.addNewFlow(dest, data, startTime);
-    if (this.model.hasInvalidFormat) {
-      this.feedback.sendError("Invalid format: Destination should be a valid IPv4 address. Data should be a positive integer indicating the data amount to send. Status should be a non-negative integer indicating the starting time from now (in seconds).");
-      this.model.hasInvalidFormat = false;
-    }
+  private addNewFlow(): void {
+    this.model.addNewFlow(this.newFlowDest, this.newFlowDataAmount, this.newFlowCountdown);
+    this.resetNewFlow();
+  }
+
+  private resetNewFlow() {
+    this.addingNewFlow = false;
+    this.newFlowDest = "";
+    this.newFlowDataAmount = "";
+    this.newFlowCountdown = "";
   }
 
 }
