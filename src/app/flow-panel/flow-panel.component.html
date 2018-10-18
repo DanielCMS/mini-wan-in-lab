@@ -19,11 +19,7 @@
     <tr>
       <td width="60%">Destination</td>
       <td width="40%">
-        <app-input
-          [value]="model.flowDestination"
-          [processor]="processToIp"
-          (changed)="model.flowDestination = $event"
-        ></app-input>
+        {{model.flowDestination}}
       </td>
     </tr>
     <tr>
