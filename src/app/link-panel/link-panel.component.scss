@@ -94,6 +94,8 @@
 .monitor-title {
   margin-top: 5px;
   margin-bottom: 10px;
+  font-family: Lato-Regular;
+
   @include flexbox();
   @include align-items(center);
 
