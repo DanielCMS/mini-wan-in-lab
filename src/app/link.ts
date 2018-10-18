@@ -125,7 +125,7 @@ export class LinkProvider implements Link {
       }
 
       this.dstBuffer.push(packet);
-      this.srcBufferData.push(newDstBufferSize);
+      this.dstBufferData.push(newDstBufferSize);
       this.dstBufferUsed = newDstBufferSize;
 
       if (!this.dstSending) {
