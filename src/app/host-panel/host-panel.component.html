@@ -79,7 +79,7 @@
       <td>
         <app-input
           [value]="newFlowCountdown"
-          [processor]="processToPosInt"
+          [processor]="processToNonnegInt"
           (changed)="newFlowCountdown = $event"
         ></app-input>
       </td>

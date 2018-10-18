@@ -3,7 +3,7 @@ import { Host, Flow, FlowStatus, AlgType } from '../network-devices';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { BYTES_PER_MB } from '../constants';
-import { processToIp, processToPosInt, processToPos } from '../processors';
+import { processToIp, processToNonnegInt, processToPos } from '../processors';
 
 const X_OFFSET = 100;
 
@@ -31,7 +31,7 @@ export class HostPanelComponent implements OnInit {
 
   constructor(private panelRegistry: PanelRegistry) { }
 
-  private processToPosInt = processToPosInt;
+  private processToNonnegInt = processToNonnegInt;
   private processToPos = processToPos;
   private processToIp = processToIp;
 

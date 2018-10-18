@@ -1,5 +1,15 @@
 const IPv4 = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/;
 
+export function processToNonnegInt(input: string, fallback: string): string {
+  let normalized = parseInt(input);
+
+  if (!isNaN(normalized) && normalized >= 0) {
+    return normalized.toString();
+  } else {
+    return fallback;
+  }
+}
+
 export function processToPosInt(input: string, fallback: string): string {
   let normalized = parseInt(input);
 
