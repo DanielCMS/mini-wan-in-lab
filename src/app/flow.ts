@@ -1,5 +1,5 @@
 import { HEADER_SIZE, PAYLOAD_SIZE, CTL_SIZE, RWND_INIT, SSTHRESH_INIT,
-  ALPHA, BETA, MIN_RTO, BYTES_PER_MB, AVG_LENGTH, MAX_STATS_LENGTH,
+  AVG_LENGTH, ALPHA, BETA, MIN_RTO, BYTES_PER_MB, MAX_STATS_LENGTH,
   BPMS_PER_MBPS, TIME_SLOWDOWN } from './constants';
 import { Packet, PacketType } from './packet';
 import { SeriesPoint } from './series-point';
@@ -8,6 +8,7 @@ import { Tahoe, Reno, Vegas, FAST } from './congestion-control';
 
 const COUNTDOWN_INTERVAL = 1000;
 const STATS_UPDATE_INTERVAL = 1000;
+const SAMPLE_INTERVAL = 250;
 
 export class FlowProvider implements Flow {
 
@@ -23,6 +24,8 @@ export class FlowProvider implements Flow {
   private packetsOnFly: Packet[] = [];
   private congestionControl: CongestionControlAlg;
   private RTOTimer: number;
+  private sampleTimer: number;
+  private statsTimer: number;
 
   public isFlow: boolean = true;
   public flowStatus: FlowStatus = FlowStatus.Waiting;
@@ -87,7 +90,15 @@ export class FlowProvider implements Flow {
     setTimeout(() => this.sendingHost.sendPacket(packet));
 
     this.lastUpdated = Date.now();
+    this.sample();
     this.updateStats();
+  }
+
+  private sample(): void {
+    this.cwndData.push(this.cwnd);
+    this.rttData.push(this.RTT);
+
+    this.sampleTimer = setTimeout(() => this.sample(), SAMPLE_INTERVAL);
   }
 
   private pushRawAndGetAvg(value: number, raw: number[]): number {
@@ -105,7 +116,7 @@ export class FlowProvider implements Flow {
 
     // Update rtt
     let rttAvg = this.rttData
-      .reduce((last, next) => last + next, 0) / Math.max(this.rttData.length, 1);
+      .reduce((last, next) => last + next, 0) / Math.max(this.rttData.length, 1) / TIME_SLOWDOWN;
 
     this.pushRawAndGetAvg(rttAvg, this.rttRaw);
 
@@ -157,10 +168,16 @@ export class FlowProvider implements Flow {
     this.rateStats = [this._rateStats];
 
     // Schedule a future updates
-    setTimeout(() => {
+    this.statsTimer = setTimeout(() => {
       this.updateStats();
     }, STATS_UPDATE_INTERVAL);
 
+  }
+
+  private stopTimers(): void {
+    clearTimeout(this.sampleTimer);
+    clearTimeout(this.statsTimer);
+    clearTimeout(this.RTOTimer);
   }
 
   private updateRTT(RTT: number): void {
@@ -200,6 +217,7 @@ export class FlowProvider implements Flow {
 
       if (this.packetsOnFly.length === 0 && this.dataRemaining <= 0) {
         this.flowStatus = FlowStatus.Complete;
+        this.stopTimers();
 
         return;
       }
@@ -216,8 +234,6 @@ export class FlowProvider implements Flow {
     }
 
     this.rateCounter = this.rateCounter + PAYLOAD_SIZE;
-    this.cwndData.push(this.cwnd);
-    this.rttData.push(this.RTT);
     this.send();
   }
 
