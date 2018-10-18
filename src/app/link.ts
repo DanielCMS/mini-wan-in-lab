@@ -13,7 +13,7 @@ const BYTES_IN_KB = 1024;
 const BYTES_PER_MBPS = 1024 * 1024 / 8;
 const STATS_UPDATE_INTERVAL = 1000; // 1s
 const MAX_STATS_LENGTH = 80;
-const AVG_LENGTH = 0.1 * TIME_SLOWDOWN;
+const AVG_LENGTH = 0.125 * TIME_SLOWDOWN;
 
 export class LinkProvider implements Link {
   public isLink: boolean = true;
