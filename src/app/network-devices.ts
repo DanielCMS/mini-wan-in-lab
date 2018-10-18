@@ -27,6 +27,7 @@ export interface Host extends Device {
 export interface Router extends Device {
   isRouter: boolean;
   lsdb: Link[];
+  routingTable: Route[];
   forwardPacket(packet: Packet): void;
   receivePacket(packet: Packet, link: Link): void;
   broadcast(packet: Packet, exclude: Link[]): void;
@@ -100,6 +101,10 @@ export interface Flow {
   updateAlg(alg: AlgType): void;
   getRTT(): number;
   getRTTMin(): number;
+}
+
+export function isFlow(element: any): element is Flow {
+  return (<Flow>element).isFlow;
 }
 
 export interface CongestionControlAlg {

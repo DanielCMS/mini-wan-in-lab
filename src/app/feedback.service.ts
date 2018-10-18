@@ -16,7 +16,7 @@ export class Message {
 })
 export class FeedbackService {
 
-  private messages: Message[] = [];
+  public messages: Message[] = [];
 
   constructor() { }
 

@@ -17,6 +17,6 @@ export const MIN_RTO = 300 * TIME_SLOWDOWN; // 300ms lower bound
 export const BPMS_PER_MBPS = 125;
 
 // parameters for Vegas
-export const VEGAS_ALPHA = 0.0003;
-export const VEGAS_BETA = 0.0006;
+export const VEGAS_ALPHA = 0.3 / TIME_SLOWDOWN;
+export const VEGAS_BETA = 0.6 / TIME_SLOWDOWN;
 export const VEGAS_GAMMA = VEGAS_BETA;

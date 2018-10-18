@@ -17,8 +17,8 @@ export class LinkPanelComponent implements OnInit {
   @Input() canvasOffset: Vector;
   @Output() close = new EventEmitter<void>();
 
-  private anchor: Vector;
-  private window = window;
+  public anchor: Vector;
+  public window = window;
 
   constructor() { }
 
@@ -29,11 +29,11 @@ export class LinkPanelComponent implements OnInit {
     };
   }
 
-  private closePanel(): void {
+  public closePanel(): void {
     this.close.emit();
   }
 
-  private processToPosInt = processToPosInt;
-  private processToPercent = processToPercent;
+  public processToPosInt = processToPosInt;
+  public processToPercent = processToPercent;
 
 }

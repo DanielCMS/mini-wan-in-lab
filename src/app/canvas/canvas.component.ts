@@ -17,17 +17,17 @@ const CLICK_DELTA = 5;
 export class CanvasComponent implements OnInit {
 
   private mouseDownLocation: Vector;
-
-  private offset: Vector = { x: 0, y: 0 };
-  private anchor: Vector;
   private last: Vector;
-  private canvasStatus: CanvasStatus = CanvasStatus.Idle;
-  private CanvasStatus = CanvasStatus;
 
-  private isCanvasDragging: boolean = false;
+  public offset: Vector = { x: 0, y: 0 };
+  public anchor: Vector;
+  public canvasStatus: CanvasStatus = CanvasStatus.Idle;
+  public CanvasStatus = CanvasStatus;
+
+  public isCanvasDragging: boolean = false;
+  public activeDeviceId: string;
+
   private isDeviceDragging: boolean = false;
-
-  private activeDeviceId: string;
   private idOfDraggingDevice: string;
 
   constructor(private deviceRegistry: DeviceRegistry,
@@ -38,7 +38,7 @@ export class CanvasComponent implements OnInit {
     this.setupMouseEvents();
   }
 
-  private requestAddingRouter(): void {
+  public requestAddingRouter(): void {
     if (this.canvasStatus === CanvasStatus.AddingRouter) {
       this.canvasStatus = CanvasStatus.Idle;
     } else {
@@ -46,7 +46,7 @@ export class CanvasComponent implements OnInit {
     }
   }
 
-  private requestAddingHost(): void {
+  public requestAddingHost(): void {
     if (this.canvasStatus === CanvasStatus.AddingHost) {
       this.canvasStatus = CanvasStatus.Idle;
     } else {
@@ -54,7 +54,7 @@ export class CanvasComponent implements OnInit {
     }
   }
 
-  private requestAddingLink(): void {
+  public requestAddingLink(): void {
     if (this.canvasStatus === CanvasStatus.AddingLink) {
       this.canvasStatus = CanvasStatus.Idle;
     } else {
@@ -62,7 +62,7 @@ export class CanvasComponent implements OnInit {
     }
   }
 
-  private requestDeleting(): void {
+  public requestDeleting(): void {
     if (this.canvasStatus === CanvasStatus.Idle) {
       this.deviceRegistry.removeElementById(this.activeDeviceId);
     }

@@ -8,9 +8,9 @@ import { MessageType, FeedbackService } from './feedback.service';
 })
 export class AppComponent {
 
-  constructor(private feedback: FeedbackService) {
+  constructor(public feedback: FeedbackService) {
   }
 
-  private MessageType = MessageType;
+  public MessageType = MessageType;
 
 }

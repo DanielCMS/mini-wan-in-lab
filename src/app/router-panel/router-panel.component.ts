@@ -15,7 +15,7 @@ export class RouterPanelComponent implements OnInit {
   @Input() canvasOffset: Vector;
   @Output() close = new EventEmitter<void>();
 
-  private anchor: Vector;
+  public anchor: Vector;
 
   constructor() { }
 
@@ -26,7 +26,7 @@ export class RouterPanelComponent implements OnInit {
     };
   }
 
-  private closePanel(): void {
+  public closePanel(): void {
     this.close.emit();
   }
 
