@@ -16,7 +16,7 @@ export class FlowProvider implements Flow {
   private windowStart: number = 0;
   private toSend: number;
   private maxAck: number = 0;
-  private timeSYN: number;
+//  private timeSYN: number;
   private seqNum: number = 0;
   private packetsOnFly: Packet[] = [];
   private congestionControl: CongestionControlAlg;
@@ -48,7 +48,7 @@ export class FlowProvider implements Flow {
 
   private handShake(): void {
     this.flowStatus = FlowStatus.HandShake;
-    this.timeSYN = Date.now();
+//    this.timeSYN = Date.now();
     let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
 
     setTimeout(() => this.sendingHost.sendPacket(packet));
@@ -71,8 +71,8 @@ export class FlowProvider implements Flow {
       let ack = new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Ack, 1, CTL_SIZE);
 
       setTimeout(() => this.sendingHost.sendPacket(ack));
-
-      this.updateRTT(Date.now() - this.timeSYN);
+      let RTT = Date.now() - packet.getTSecr();
+      this.updateRTT(RTT);
       this.updateRTO();
       this.flowStatus = FlowStatus.SS;
     }
