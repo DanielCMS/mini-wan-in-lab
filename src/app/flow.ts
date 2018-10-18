@@ -85,6 +85,8 @@ export class FlowProvider implements Flow {
     let packet =  new Packet(this.flowId, this.flowSource, this.flowDestination, PacketType.Syn, 0, CTL_SIZE);
 
     setTimeout(() => this.sendingHost.sendPacket(packet));
+
+    this.lastUpdated = Date.now();
     this.updateStats();
   }
 

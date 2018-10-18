@@ -10,11 +10,11 @@ export class FlowReceivedProvider implements FlowReceived {
   constructor(public flowId: string) {}
 
   public onReceive(packet: Packet): void {
-    this.pktRecieved.push(packet.sequenceNumber);
-    if (this.pktRecieved.length > this.rwnd) {
-      this.pktRecieved.shift();
+    this.pktReceived.push(packet.sequenceNumber);
+    if (this.pktReceived.length > this.rwnd) {
+      this.pktReceived.shift();
     }
-    while(this.pktRecieved.includes(this.nextAck)) {
+    while(this.pktReceived.includes(this.nextAck)) {
       this.nextAck++;
     }
   }
