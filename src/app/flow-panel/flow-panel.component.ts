@@ -20,7 +20,7 @@ export class FlowPanelComponent implements OnInit {
 
   private anchor: Vector;
   private window = window;
-  private AlgType = AlgType;
+  private algs: string[] = Object.keys(AlgType);
   private BYTES_PER_MB = BYTES_PER_MB;
 
   constructor() { }

@@ -18,7 +18,7 @@ export interface Host extends Device {
   flowList: Flow[];
   receiveList: FlowReceived[];
   getIp(): string;
-  addNewFlow(dest: string, data: number, startTime: number): void;
+  addNewFlow(dest: string, data: number, algorithm: AlgType, startTime: number): void;
   receivePacket(packet: Packet, link: Link): void;
   sendPacket(packet: Packet): void;
 }
@@ -82,6 +82,7 @@ export class Route {
 }
 
 export interface Flow {
+  isFlow: boolean;
   flowId: string;
   cwnd: number;
   ssthresh: number;

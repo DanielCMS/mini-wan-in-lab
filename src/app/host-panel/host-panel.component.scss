@@ -84,6 +84,10 @@ $check-color: $brand-success;
   }
 }
 
+.flow-row {
+  cursor: pointer;
+}
+
 .empty-row {
   line-height: 15px;
   height: 15px;
@@ -113,18 +117,13 @@ $check-color: $brand-success;
   cursor: pointer;
   margin-top: 10px;
   font-family: Lato-Regular;
-
-  &.close {
-    font-size: 27px;
-    margin-top: 0;
-  }
 }
 
 .add-button {
   float: right;
   padding: 5px;
 
-  button {
+  button.active {
     cursor: pointer;
   }
 }
@@ -149,6 +148,12 @@ $check-color: $brand-success;
   border-radius: 50%;
   width: $loader-size;
   height: $loader-size;
+
+  p {
+    font-size:13px;
+    margin-top: -5px;
+    color: $dark-grey;
+  }
 }
 
 .circle-loader {
@@ -224,4 +229,8 @@ $check-color: $brand-success;
     width: $check-width;
     opacity: 1;
   }
+}
+
+.select {
+  width: 100%;
 }

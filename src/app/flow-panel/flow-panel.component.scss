@@ -72,11 +72,7 @@
       text-align: center;
       font-family: Lato-Regular;
       font-size: 14px;
-    }
-
-    td.unit {
-      text-align: left;
-      padding-left: 10px;
+      padding-right: 15px;
     }
 
     input {
@@ -106,4 +102,8 @@
   max-height: 250px;
   overflow-y: scroll;
   overflow-x: hidden;
+}
+
+.select {
+  width: 100%;
 }

@@ -1,14 +1,14 @@
 <div
   class="flow-panel"
-  [id]="'panel-' + model.id"
+  [id]="'panel-' + model.flowId"
   [style.top.px]="anchor.y"
   [style.left.px]="anchor.x"
   draggable
-  [dragHandle]="'#panel-' + model.id + ' .handle'"
+  [dragHandle]="'#panel-' + model.flowId + ' .handle'"
 >
   <div class="handle">
     <img width="18" height="18" src="/assets/images/hub.svg" alt="">
-    <span class="title-text">{{model.label || 'New Flow'}}</span>
+    <span class="title-text">Flow from {{model.sendingHost.label}}</span>
     <span class="cross" (click)="closePanel()">✕</span>
   </div>
 
@@ -17,8 +17,8 @@
   <span class="title">Details</span>
   <table>
     <tr>
-      <td width="50%">Destination</td>
-      <td width="50%">
+      <td width="60%">Destination</td>
+      <td width="40%">
         <app-input
           [value]="model.flowDestination"
           [processor]="processToIp"
@@ -29,16 +29,21 @@
     <tr>
       <td>TCP Algorithm</td>
       <td>
-        <select [value]="model.algorithm" (changed)="model.updateAlg($event)">
+        <select
+          class="select"
+          [value]="model.algorithm"
+          (changed)="model.updateAlg($event)"
+        >
           <option
-            *ngFor="let alg of AlgType"
-            [value]="alg">{{alg}}
+            *ngFor="let alg of algs"
+            [value]="alg">
+            {{alg}}
           </option>
         </select>
       </td>
     </tr>
     <tr>
-      <td>Remaining Data</td>
+      <td>Remaining Data (MB)</td>
       <td>{{(model.dataRemaining / BYTES_PER_MB).toFixed(2)}}</td>
     </tr>
   </table>

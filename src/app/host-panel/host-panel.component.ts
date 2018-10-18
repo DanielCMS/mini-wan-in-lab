@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Host, Flow, FlowStatus } from '../network-devices';
+import { Host, Flow, FlowStatus, AlgType } from '../network-devices';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { BYTES_PER_MB } from '../constants';
@@ -22,10 +22,12 @@ export class HostPanelComponent implements OnInit {
   private BYTES_PER_MB = BYTES_PER_MB;
   private FlowStatus = FlowStatus;
 
-  private addingNewFlow: boolean = false;
-  private newFlowDest: string = "";
-  private newFlowDataAmount: string = "";
-  private newFlowCountdown: string = "";
+  private addingNewFlow: boolean;
+  private newFlowDest: string;
+  private newFlowDataAmount: string;
+  private newFlowCountdown: string;
+  private newFlowAlg: string;
+  private algs: string[];
 
   constructor(private panelRegistry: PanelRegistry) { }
 
@@ -37,6 +39,8 @@ export class HostPanelComponent implements OnInit {
       x: Math.min(this.model.position.x + this.canvasOffset.x + X_OFFSET, window.innerWidth - 230),
       y: Math.min(this.model.position.y + this.canvasOffset.y, window.innerHeight - 230)
     };
+    this.algs = Object.keys(AlgType);
+    this.resetNewFlow();
   }
 
   private toggleAddNewFlow(): void {
@@ -52,15 +56,16 @@ export class HostPanelComponent implements OnInit {
   }
 
   private addNewFlow(): void {
-    this.model.addNewFlow(this.newFlowDest, +this.newFlowDataAmount, +this.newFlowCountdown);
+    this.model.addNewFlow(this.newFlowDest, +this.newFlowDataAmount, <AlgType>this.newFlowAlg, +this.newFlowCountdown);
     this.resetNewFlow();
   }
 
   private resetNewFlow() {
     this.addingNewFlow = false;
     this.newFlowDest = "";
-    this.newFlowDataAmount = "";
-    this.newFlowCountdown = "";
+    this.newFlowDataAmount = "5";
+    this.newFlowCountdown = "5";
+    this.newFlowAlg = this.algs[0];
   }
 
 }

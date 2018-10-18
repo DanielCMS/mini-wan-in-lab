@@ -3,7 +3,7 @@ import { Vector } from './vector';
 import { CTL_SIZE } from './constants';
 import { Packet, PacketType } from './packet';
 import { BaseDevice } from './base-device';
-import { Host, Flow, Link, FlowReceived } from './network-devices';
+import { Host, Flow, Link, FlowReceived, AlgType } from './network-devices';
 import { FlowReceivedProvider } from './flow-received';
 import { FlowProvider } from './flow';
 
@@ -21,8 +21,8 @@ export class HostProvider extends BaseDevice implements Host {
     };
   }
 
-  public addNewFlow(dest: string, data: number, startTime: number): void {
-    this.flowList.push(new FlowProvider(v4(), this, dest, data, startTime));
+  public addNewFlow(dest: string, data: number, alg: AlgType, startTime: number): void {
+    this.flowList.push(new FlowProvider(v4(), this, dest, data, alg, startTime));
   }
 
   public getIp(): string {

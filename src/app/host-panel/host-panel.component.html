@@ -31,7 +31,7 @@
     [class.close]="addingNewFlow"
     (click)="toggleAddNewFlow()"
   >
-    {{addingNewFlow ? '-' : 'Add Flow'}}
+    {{addingNewFlow ? 'Cancel' : 'Add Flow'}}
   </span>
   <table
     *ngIf="addingNewFlow"
@@ -41,6 +41,7 @@
       <td>Destination</td>
       <td colspan="2">
         <app-input
+          [placeholder]="'Enter the target IP'"
           [value]="newFlowDest"
           [processor]="processToIp"
           (changed)="newFlowDest = $event"
@@ -59,6 +60,21 @@
       <td width="10%">MB</td>
     </tr>
     <tr>
+      <td>TCP Algorithm</td>
+      <td colspan="2">
+        <select
+          class="select"
+          [value]="newFlowAlg"
+          (changed)="newFlowAlg($event)">
+          <option
+            *ngFor="let alg of algs"
+            [value]="alg">
+            {{alg}}
+          </option>
+        </select>
+      </td>
+    </tr>
+    <tr>
       <td>Start After</td>
       <td>
         <app-input
@@ -71,15 +87,18 @@
     </tr>
   </table>
   <div *ngIf="addingNewFlow">
-    <div
-      *ngIf="newFlowDest && newFlowDataAmount && model.getIp() !== 'N/A'; else emptyRow"
-      class="add-button"
-    >
-      <button (click)="addNewFlow()">Add</button>
+    <div class="add-button">
+      <button
+        class="active"
+        (click)="addNewFlow()"
+        *ngIf="newFlowDest && newFlowDataAmount && model.getIp() !== 'N/A'; else emptyRow"
+      >
+        Add
+      </button>
+      <ng-template #emptyRow>
+        <button disabled>Add</button>
+      </ng-template>
     </div>
-    <ng-template #emptyRow>
-      <div class="empty-row"> </div>
-    </ng-template>
   </div>
   <div class="scroll">
     <table>
@@ -91,6 +110,8 @@
       </tr>
       <tr
         *ngFor="let flow of model.flowList; let i = index"
+        class="flow-row"
+        (click)="openFlowPanel(flow)"
       >
         <td width="3%"> {{i + 1}} </td>
         <td width="43%"> {{flow.flowDestination}} </td>
@@ -98,8 +119,8 @@
         <td width="27%">
           <ng-container [ngSwitch]="flow.flowStatus">
             <div *ngSwitchCase="FlowStatus.Waiting">
-              <div class = "countdown">
-                <p style="font-size:13px; margin-top: -5px; color: gray">{{flow.countdown}}</p>
+              <div class="countdown">
+                <p>{{flow.countdown}}</p>
               </div>
             </div>
             <div *ngSwitchCase="FlowStatus.Completed">

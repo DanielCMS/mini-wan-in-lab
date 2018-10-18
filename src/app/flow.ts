@@ -12,7 +12,6 @@ export class FlowProvider implements Flow {
   private flowSource: string;
   private flowDestination: string;
   private dataRemaining: number;
-  private algorithm: AlgType;
   private RTT: number;
   private RTO: number;
   private windowStart: number = 0;
@@ -23,6 +22,7 @@ export class FlowProvider implements Flow {
   private congestionControl: CongestionControlAlg;
   private RTOTimer: number;
 
+  public isFlow: boolean = true;
   public flowStatus: FlowStatus = FlowStatus.Waiting;
   public cwnd: number = 1;
   public maxAckDup: number = 0;
@@ -32,11 +32,11 @@ export class FlowProvider implements Flow {
   public cwndStats: SeriesPoint[][] = [];
   public rttStats: SeriesPoint[][] = [];
 
-  constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, private countdown: number) {
+  constructor(public flowId: string, public sendingHost: Host, public destIP: string, public data: number, private algorithm: AlgType, private countdown: number) {
     this.flowSource = sendingHost.getIp();
     this.flowDestination = destIP + "/24";
     this.dataRemaining = data * BYTES_PER_MB; // in Bytes
-    this.updateAlg(AlgType.Reno);
+    this.updateAlg(algorithm);
 
     this.countDown();
   }
