@@ -172,15 +172,11 @@ export class LinkProvider implements Link {
 
     this.srcLatencyData = [];
 
-    // Update buffer size
-    let bufferAvg = this.srcBufferData
-      .reduce((last, next) => last + next, 0) / Math.max(this.srcBufferData.length, 1) / BYTES_IN_KB;
-
-    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.srcBufferSizeRaw);
+    let bufferMax = Math.max(0, ...this.srcBufferData) / BYTES_IN_KB;
 
     this.srcBufferSizeStats.push({
       time: now,
-      value: bufferAvg
+      value: bufferMax
     });
 
     this.srcBufferData = [];
@@ -251,14 +247,11 @@ export class LinkProvider implements Link {
     this.dstLatencyData = [];
 
     // Update buffer size
-    let bufferAvg = this.dstBufferData
-      .reduce((last, next) => last + next, 0) / Math.max(this.dstBufferData.length, 1) / BYTES_IN_KB;
-
-    bufferAvg = this.pushRawAndGetAvg(bufferAvg, this.dstBufferSizeRaw);
+    let bufferMax = Math.max(0, ...this.dstBufferData) / BYTES_IN_KB;
 
     this.dstBufferSizeStats.push({
       time: now,
-      value: bufferAvg
+      value: bufferMax
     });
 
     this.dstBufferData = [];

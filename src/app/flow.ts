@@ -246,7 +246,7 @@ export class FlowProvider implements Flow {
   }
 
   private collapseSsthresh(): void {
-    let flightSize = this.seqNum - this.maxAck;
+    let flightSize = this.packetsOnFly.length;
 
     this.ssthresh = Math.floor(Math.max(flightSize / 2, 2));
   }
@@ -306,7 +306,12 @@ export class FlowProvider implements Flow {
 
       if (pkt) {
         setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
-        this.packetsOnFly.push(pkt);
+
+        let lastOnFlight = Math.max(0, ...this.packetsOnFly.map(pkt => pkt.sequenceNumber));
+
+        if (pkt.sequenceNumber > lastOnFlight) {
+          this.packetsOnFly.push(pkt);
+        }
       } else {
         break;
       }
