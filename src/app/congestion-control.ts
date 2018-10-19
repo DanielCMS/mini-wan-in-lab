@@ -54,7 +54,7 @@ export class Reno implements CongestionControlAlg {
     if (flow.maxAckDup === 3) {
       flow.cwnd = flow.ssthresh + 3;
       flow.flowStatus = FlowStatus.FRFR;
-    } else if (flow.maxAckDup > 3) {
+    } else if (flow.maxAckDup > 3 && flow.flowTatus === FlowStatus.FRFR) {
       flow.cwnd = flow.cwnd + 1;
     }
   }

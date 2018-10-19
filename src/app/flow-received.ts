@@ -16,6 +16,8 @@ export class FlowReceivedProvider implements FlowReceived {
     }
 
     if (seq === this.nextAck) {
+      console.log(this.pktsReceived);
+      console.log(this.nextAck);
       this.updateNextAck();
       this.deliverReceivedPkts();
     }
@@ -30,31 +32,8 @@ export class FlowReceivedProvider implements FlowReceived {
   }
 
   private updateNextAck(): void {
-    let pkts = this.pktsReceived;
-    let ack = this.nextAck;
-    let swap = (i, j) => {
-      let tmp = pkts[i];
-
-      pkts[i] = pkts[j];
-      pkts[j] = tmp;
-    };
-
-    for (let i = 0; i < pkts.length; i++) {
-      while (pkts[i] - ack < pkts.length
-        && pkts[i] !== i + ack
-        && pkts[i] !== pkts[pkts[i] - ack]) {
-        swap(i, pkts[i] - ack);
-      }
-
-      for (let i = 0; i < pkts.length; i++) {
-        if (pkts[i] !== i + ack) {
-          this.nextAck = i + ack;
-
-          return;
-        }
-      }
+    while (this.pktsReceived.includes(this.nextAck)) {
+      this.nextAck++;
     }
-
-    this.nextAck = pkts.length + ack;
   }
 }
