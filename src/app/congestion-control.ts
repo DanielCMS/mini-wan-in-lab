@@ -1,5 +1,5 @@
 import { CongestionControlAlg, Flow, FlowStatus } from './network-devices';
-import { VEGAS_ALPHA, VEGAS_BETA, VEGAS_GAMMA } from './constants';
+import { VEGAS_ALPHA, VEGAS_BETA, VEGAS_GAMMA, FAST_GAMMA } from './constants';
 
 export class Tahoe implements CongestionControlAlg {
   constructor(public flow: Flow) {}
@@ -117,8 +117,13 @@ export class Vegas extends Reno implements CongestionControlAlg {
 }
 
 export class FAST extends Vegas implements CongestionControlAlg {
+  private lastUpdate: number;
+  private onHold: boolean = true;
+  private changeTarget: number;
+
   constructor(public flow: Flow) {
     super(flow);
+    this.lastUpdated = Date.now();
   }
 
   public onReceiveNewAck(): void {
@@ -129,6 +134,21 @@ export class FAST extends Vegas implements CongestionControlAlg {
     } else if (flow.flowStatus === FlowStatus.FRFR) {
       super.handleFRFR();
     } else if (flow.flowStatus === FlowStatus.CA) {
+      if (!this.onHold) {
+        flow.cwnd += this.changeTarget / flow.cwnd;
+      }
+
+      if (Date.now() - this.lastUpdated > flow.getRTT()) {
+        if (this.onHold) {
+          let RTTMin = flow.getRTTMin();
+
+          this.changeTarget = Math.min(flow.cwnd,
+            FAST_GAMMA * ((RTTMin / flow.getRTT() - 1) * flow.cwnd + VEGAS_ALPHA * RTTMin));
+        }
+
+        this.lastUpdated = Date.now();
+        this.onHold = !this.onHold;
+      }
     }
   }
 

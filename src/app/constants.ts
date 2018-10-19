@@ -20,3 +20,6 @@ export const BPMS_PER_MBPS = 125;
 export const VEGAS_ALPHA = 0.2 / TIME_SLOWDOWN;
 export const VEGAS_BETA = 0.2 / TIME_SLOWDOWN;
 export const VEGAS_GAMMA = VEGAS_BETA;
+
+// parameters for FAST
+export const FAST_GAMMA = 0.5;
