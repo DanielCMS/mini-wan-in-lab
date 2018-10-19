@@ -16,8 +16,6 @@ export class FlowReceivedProvider implements FlowReceived {
     }
 
     if (seq === this.nextAck) {
-      console.log(this.pktsReceived);
-      console.log(this.nextAck);
       this.updateNextAck();
       this.deliverReceivedPkts();
     }

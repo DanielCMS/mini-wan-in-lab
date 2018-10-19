@@ -254,6 +254,8 @@ export class FlowProvider implements Flow {
   private retransmit(): void {
     let pkt = this.packetsOnFly[0];
 
+    pkt.setTSval(Date.now());
+
     if (pkt) {
       setTimeout(() => this.sendingHost.sendPacket(<Packet>pkt));
     }
