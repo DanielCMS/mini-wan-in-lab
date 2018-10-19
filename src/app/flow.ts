@@ -102,7 +102,7 @@ export class FlowProvider implements Flow {
   }
 
   private pushRawAndGetAvg(value: number, raw: number[]): number {
-    if (value) {
+    if (!isNaN(value)) {
       raw.push(value);
     }
 
@@ -246,7 +246,7 @@ export class FlowProvider implements Flow {
   }
 
   private collapseSsthresh(): void {
-    let flightSize = this.packetsOnFly.length;
+    let flightSize = this.seqNum - this.maxAck;
 
     this.ssthresh = Math.floor(Math.max(flightSize / 2, 2));
   }
@@ -287,9 +287,9 @@ export class FlowProvider implements Flow {
 
     this.seqNum++;
 
-    let lastOnFlight = this.packetsOnFly.slice(-1)[0];
+    let lastOnFlight = Math.max(0, ...this.packetsOnFly.map(pkt => pkt.sequenceNumber));
 
-    if (lastOnFlight && this.seqNum < lastOnFlight.sequenceNumber) {
+    if (this.seqNum < lastOnFlight) {
       console.log("Retransmitting on flight packet");
     } else {
       this.dataRemaining = this.dataRemaining - pktSize;
