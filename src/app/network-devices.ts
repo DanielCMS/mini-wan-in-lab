@@ -4,6 +4,7 @@ import { Packet, PacketType } from './packet';
 
 export interface Device {
   id: string;
+  label: string;
   interfaces: Interface[];
   position: Vector;
 
@@ -26,6 +27,7 @@ export interface Host extends Device {
 export interface Router extends Device {
   isRouter: boolean;
   lsdb: Link[];
+  routingTable: Route[];
   forwardPacket(packet: Packet): void;
   receivePacket(packet: Packet, link: Link): void;
   broadcast(packet: Packet, exclude: Link[]): void;
@@ -88,6 +90,9 @@ export interface Flow {
   ssthresh: number;
   maxAckDup: number;
   sendingHost: Host;
+  dataRemaining: number;
+  flowDestination: string;
+  algorithm: AlgType;
   rateStats: SeriesPoint[][];
   cwndStats: SeriesPoint[][];
   rttStats: SeriesPoint[][];
@@ -98,6 +103,10 @@ export interface Flow {
   getRTTMin(): number;
 }
 
+export function isFlow(element: any): element is Flow {
+  return (<Flow>element).isFlow;
+}
+
 export interface CongestionControlAlg {
   onReceiveNewAck(): void;
   onReceiveDupAck(): void;
@@ -105,11 +114,7 @@ export interface CongestionControlAlg {
 
 export interface FlowReceived {
   flowId: string; // id of the received flow
-  rwnd: number; // Receive window size
-  pktRecieved: number[]; // seq numbers of received packets
-  nextAck: number; // seq number of the the next Ack packet
   onReceive(packet: Packet): void;
-  getAckSeqNum(): number;
 }
 
 export enum AlgType {

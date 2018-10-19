@@ -1,29 +1,37 @@
-import { RWND_INIT } from './constants';
-import { FlowReceived } from './network-devices';
-import { Packet } from './packet';
+import { CTL_SIZE } from './constants';
+import { Host, FlowReceived } from './network-devices';
+import { Packet, PacketType } from './packet';
 
 export class FlowReceivedProvider implements FlowReceived {
-  public rwnd: number; // receive window size
-  public pktRecieved: number[]; // seq numbers of received packets
-  public nextAck: number; // seq number of the the next Ack packet
+  private pktsReceived: number[] = []; // seq numbers of received packets
+  private nextAck: number = 0; // seq number of the the next Ack packet
 
-  constructor(public flowId: string) {
-    this.rwnd = RWND_INIT;
-    this.pktRecieved = [];
-    this.nextAck = 1;
-  }
+  constructor(public flowId: string, private host: Host) {}
 
   public onReceive(packet: Packet): void {
-    this.pktRecieved.push(packet.sequenceNumber);
-    if (this.pktRecieved.length > this.rwnd) {
-      this.pktRecieved.shift();
+    let seq = packet.sequenceNumber;
+
+    if (seq >= this.nextAck) {
+      this.pktsReceived.push(seq);
     }
-    while(this.pktRecieved.includes(this.nextAck)) {
-      this.nextAck++;
+
+    if (seq === this.nextAck) {
+      this.updateNextAck();
+      this.deliverReceivedPkts();
     }
+
+    let pkt = new Packet(this.flowId, packet.dstIp, packet.srcIp, PacketType.Ack, this.nextAck, CTL_SIZE, packet.getTSval());
+
+    setTimeout(() => this.host.sendPacket(pkt));
   }
 
-  public getAckSeqNum(): number {
-    return this.nextAck;
+  private deliverReceivedPkts(): void {
+    this.pktsReceived = this.pktsReceived.filter(seq => seq >= this.nextAck);
+  }
+
+  private updateNextAck(): void {
+    while (this.pktsReceived.includes(this.nextAck)) {
+      this.nextAck++;
+    }
   }
 }

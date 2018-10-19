@@ -53,7 +53,7 @@
       <td width="50%">
         <app-input
           [value]="newFlowDataAmount"
-          [processor]="processToPosInt"
+          [processor]="processToPos"
           (changed)="newFlowDataAmount = $event"
         ></app-input>
       </td>
@@ -65,7 +65,7 @@
         <select
           class="select"
           [value]="newFlowAlg"
-          (changed)="newFlowAlg($event)">
+          (change)="newFlowAlg = $event.target.value">
           <option
             *ngFor="let alg of algs"
             [value]="alg">
@@ -79,7 +79,7 @@
       <td>
         <app-input
           [value]="newFlowCountdown"
-          [processor]="processToPosInt"
+          [processor]="processToNonnegInt"
           (changed)="newFlowCountdown = $event"
         ></app-input>
       </td>
@@ -123,7 +123,7 @@
                 <p>{{flow.countdown}}</p>
               </div>
             </div>
-            <div *ngSwitchCase="FlowStatus.Completed">
+            <div *ngSwitchCase="FlowStatus.Complete">
               <div class = "circle-loader load-complete checkmark draw"></div>
             </div>
             <div *ngSwitchDefault>

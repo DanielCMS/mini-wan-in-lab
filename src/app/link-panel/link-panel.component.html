@@ -26,7 +26,7 @@
         <app-input
           [value]="model.capacity.toString()"
           [processor]="processToPosInt"
-          (changed)="model.capacity = window.parseInt($event)"
+          (changed)="model.capacity = +$event"
         ></app-input>
       </td>
       <td width="30%" class="unit">
@@ -39,7 +39,7 @@
         <app-input
           [value]="model.delay.toString()"
           [processor]="processToPosInt"
-          (changed)="model.delay = window.parseInt(+$event)"
+          (changed)="model.delay = +$event"
         ></app-input>
       </td>
       <td class="unit">
@@ -52,7 +52,7 @@
         <app-input
           [value]="model.lossRate.toString()"
           [processor]="processToPercent"
-          (changed)="model.lossRate = window.parseFloat($event)"
+          (changed)="model.lossRate = +$event"
         ></app-input>
       </td>
       <td class="unit">
@@ -65,7 +65,7 @@
         <app-input
           [value]="model.bufferSize.toString()"
           [processor]="processToPosInt"
-          (changed)="model.bufferSize = window.parseInt($event)"
+          (changed)="model.bufferSize = +$event"
         ></app-input>
       </td>
       <td class="unit">
@@ -78,7 +78,7 @@
         <app-input
           [value]="model.metric.toString()"
           [processor]="processToPosInt"
-          (changed)="model.updateMetric(window.parseInt($event))"
+          (changed)="model.updateMetric(+$event)"
         ></app-input>
       </td>
       <td class="unit">
@@ -89,10 +89,10 @@
   <div class="scrollable">
     <div class="monitor-title">
       <img src="/assets/images/throughput-icon.svg">
-      THROUGHPUT (Mbps)
+      Link Rate (Mbps)
     </div>
     <app-series-chart
-      [xAxisWidth]="250"
+      [xAxisWidth]="265"
       [yAxisLength]="130"
       [data]="model.throughputStats"
     ></app-series-chart>
@@ -101,27 +101,27 @@
       Buffer Used (KB)
     </div>
     <app-series-chart
-      [xAxisWidth]="250"
+      [xAxisWidth]="265"
       [yAxisLength]="130"
       [data]="model.bufferSizeStats"
     ></app-series-chart>
 
     <div class="monitor-title">
       <img src="/assets/images/latency-icon.svg">
-      LATENCY (ms)
+      Latency (ms)
     </div>
     <app-series-chart
-      [xAxisWidth]="250"
+      [xAxisWidth]="265"
       [yAxisLength]="130"
       [data]="model.latencyStats"
     ></app-series-chart>
 
     <div class="monitor-title">
       <img src="/assets/images/packet-loss-icon.svg">
-      PACKET LOST PER SECOND
+      Packet Lost
     </div>
     <app-series-chart
-      [xAxisWidth]="250"
+      [xAxisWidth]="265"
       [yAxisLength]="130"
       [data]="model.packetLossStats"
     ></app-series-chart>

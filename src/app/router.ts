@@ -10,7 +10,7 @@ const BROADCAST_CACHE_INTERVAL = 60000; // 1min
 export class RouterProvider extends BaseDevice implements Router {
   public isRouter: boolean = true;
   public lsdb: Link[] = [];
-  private routingTable: Route[] = [];
+  public routingTable: Route[] = [];
   private fib: { [ip: string]: Link } = {};
 
   private cachedBroadcastPkt: Packet[] = [];

@@ -3,7 +3,7 @@ import { Host, Flow, FlowStatus, AlgType } from '../network-devices';
 import { PanelRegistry } from '../panel-registry.service';
 import { Vector } from '../vector';
 import { BYTES_PER_MB } from '../constants';
-import { processToIp, processToPosInt } from '../processors';
+import { processToIp, processToNonnegInt, processToPos } from '../processors';
 
 const X_OFFSET = 100;
 
@@ -18,21 +18,22 @@ export class HostPanelComponent implements OnInit {
   @Input() canvasOffset: Vector;
   @Output() close = new EventEmitter<void>();
 
-  private anchor: Vector;
-  private BYTES_PER_MB = BYTES_PER_MB;
-  private FlowStatus = FlowStatus;
+  public anchor: Vector;
+  public BYTES_PER_MB = BYTES_PER_MB;
+  public FlowStatus = FlowStatus;
 
-  private addingNewFlow: boolean;
-  private newFlowDest: string;
-  private newFlowDataAmount: string;
-  private newFlowCountdown: string;
-  private newFlowAlg: string;
-  private algs: string[];
+  public addingNewFlow: boolean;
+  public newFlowDest: string;
+  public newFlowDataAmount: string;
+  public newFlowCountdown: string;
+  public newFlowAlg: string;
+  public algs: string[];
+
+  public processToNonnegInt = processToNonnegInt;
+  public processToPos = processToPos;
+  public processToIp = processToIp;
 
   constructor(private panelRegistry: PanelRegistry) { }
-
-  private processToPosInt = processToPosInt;
-  private processToIp = processToIp;
 
   ngOnInit() {
     this.anchor = {
@@ -43,19 +44,19 @@ export class HostPanelComponent implements OnInit {
     this.resetNewFlow();
   }
 
-  private toggleAddNewFlow(): void {
+  public toggleAddNewFlow(): void {
     this.addingNewFlow = !this.addingNewFlow;
   }
 
-  private openFlowPanel(flow: Flow): void {
+  public openFlowPanel(flow: Flow): void {
     this.panelRegistry.openPanelFor(flow);
   }
 
-  private closePanel(): void {
+  public closePanel(): void {
     this.close.emit();
   }
 
-  private addNewFlow(): void {
+  public addNewFlow(): void {
     this.model.addNewFlow(this.newFlowDest, +this.newFlowDataAmount, <AlgType>this.newFlowAlg, +this.newFlowCountdown);
     this.resetNewFlow();
   }

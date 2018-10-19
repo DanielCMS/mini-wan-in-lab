@@ -90,6 +90,7 @@
 .monitor-title {
   margin-top: 5px;
   margin-bottom: 10px;
+  font-family: Lato-Regular;
   @include flexbox();
   @include align-items(center);
 
@@ -102,6 +103,7 @@
   max-height: 250px;
   overflow-y: scroll;
   overflow-x: hidden;
+  margin-top: 20px;
 }
 
 .select {
