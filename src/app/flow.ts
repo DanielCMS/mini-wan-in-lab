@@ -235,7 +235,6 @@ export class FlowProvider implements Flow {
       }
     }
 
-    this.rateCounter = this.rateCounter + PAYLOAD_SIZE;
     this.send();
   }
 
@@ -262,6 +261,7 @@ export class FlowProvider implements Flow {
 
   private onReceiveNewAck(): void {
     this.restartRTO();
+    this.rateCounter = this.rateCounter + PAYLOAD_SIZE;
     this.congestionControl.onReceiveNewAck();
   }
 
