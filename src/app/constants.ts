@@ -13,7 +13,7 @@ export const SSTHRESH_INIT = Number.MAX_VALUE;
 export const ALPHA = 0.125;
 export const BETA = 2; // RTO = BETA * RTT
 export const BYTES_PER_MB = 1000 * 1000; // 1 MB = 1000 * 1000 Byte
-export const MIN_RTO = 80 * TIME_SLOWDOWN; // 80ms lower bound
+export const MIN_RTO = 200 * TIME_SLOWDOWN; // 80ms lower bound
 export const BPMS_PER_MBPS = 125;
 
 // parameters for Vegas
